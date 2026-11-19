@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>PHYSICS LAB 3D — 3D物理演算サンドボックス</title>
+<style>
+:root{--bg:#060a12;--panel:rgba(10,17,30,.82);--line:rgba(56,189,248,.25);--cy:#00e5ff;--bl:#38bdf8;--am:#f59e0b;--rd:#ef4444;--tx:#e2e8f0;--dim:#94a3b8;--s2:rgba(20,32,54,.75);--top:68px;color-scheme:dark}
+*{box-sizing:border-box;user-select:none;-webkit-user-select:none}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--tx);font:12px "Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif}
+#viewport{display:block;width:100vw;height:100vh;touch-action:none}
+.gp{background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:0 8px 32px rgba(0,0,0,.55);border-radius:10px}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:rgba(56,189,248,.3);border-radius:3px}
+#top{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:10px;right:10px;min-height:48px;display:flex;align-items:center;justify-content:space-between;padding:4px 12px;z-index:20;gap:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.logo{width:28px;height:28px;border-radius:7px;background:rgba(0,229,255,.18);border:1px solid var(--cy);display:grid;place-items:center;font-weight:800;color:var(--cy);font-size:13px;box-shadow:0 0 12px rgba(0,229,255,.35)}
+.bt{font-weight:800;font-size:14px;letter-spacing:.08em;color:#fff}.bs{font-size:9px;color:var(--dim);letter-spacing:.14em}
+.tc{display:flex;align-items:center;gap:6px;overflow-x:auto;max-width:100%}
+.dv{width:1px;height:22px;background:rgba(148,163,184,.22);margin:0 3px;flex-shrink:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:6px 10px;border-radius:7px;border:1px solid rgba(148,163,184,.22);background:var(--s2);color:var(--tx);font:600 11px inherit;font-family:inherit;cursor:pointer;transition:.18s;white-space:nowrap}
+.btn:hover{border-color:var(--cy);background:rgba(0,229,255,.14);color:#fff}
+.btn.active{border-color:var(--cy);background:rgba(0,229,255,.22);color:var(--cy)}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.pri{border-color:rgba(0,229,255,.55);background:rgba(0,229,255,.18);color:var(--cy)}
+.dng{border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.14);color:#fca5a5}
+.warn{border-color:rgba(245,158,11,.45);background:rgba(245,158,11,.14);color:#fcd34d}
+.tele{display:flex;gap:8px;font:11px Consolas,monospace;flex-shrink:0}
+.chip{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:6px;background:rgba(6,10,18,.65);border:1px solid rgba(56,189,248,.18)}
+.chip i{color:var(--dim);font-style:normal;font-size:10px}.chip b{color:var(--cy)}
+#dot{width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981}#dot.p{background:var(--am);box-shadow:0 0 8px var(--am)}
+.side{position:fixed;top:calc(var(--top) + env(safe-area-inset-top,0px));bottom:calc(48px + env(safe-area-inset-bottom,0px));width:268px;z-index:15;display:flex;flex-direction:column;overflow:hidden;transition:transform .28s cubic-bezier(.22,1,.36,1)}
+#left{left:10px}#left.collapsed{transform:translateX(-282px)}#right{right:10px}#right.collapsed{transform:translateX(282px)}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(56,189,248,.16);font-weight:700;font-size:11px;letter-spacing:.08em;color:var(--bl);flex-shrink:0}
+.pb{padding:10px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;flex:1}
+.st{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--dim);margin-bottom:6px;display:flex;justify-content:space-between}
+.tgl{position:fixed;top:calc(var(--top) + 8px + env(safe-area-inset-top,0px));z-index:16;width:26px;height:44px;display:grid;place-items:center;cursor:pointer;color:var(--cy);font-size:13px;border:0;font-family:inherit}
+#tl{left:284px}#left.collapsed+#tl{left:10px}#tr{right:284px}#right.collapsed+#tr{right:10px}
+.tg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.tb{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;border-radius:8px;border:1px solid rgba(148,163,184,.18);background:var(--s2);color:var(--tx);cursor:pointer;font:600 10px inherit;font-family:inherit}
+.tb .ic{font-size:15px;line-height:1}.tb:hover{border-color:var(--bl)}.tb.on{border-color:var(--cy);background:rgba(0,229,255,.2);color:var(--cy)}
+.og{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.oc{display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:8px;border:1px solid rgba(148,163,184,.18);background:var(--s2);cursor:pointer;text-align:left;color:var(--tx);font-family:inherit}
+.oc:hover{border-color:var(--bl)}.oc.on{border-color:var(--cy);background:rgba(0,229,255,.18)}
+.sw0{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;font-size:13px;flex-shrink:0;border:1px solid}
+.on1{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.on2{font-size:9px;color:var(--dim)}.om{min-width:0}
+.cg{background:rgba(6,11,20,.5);border:1px solid rgba(148,163,184,.14);border-radius:8px;padding:9px 10px;display:flex;flex-direction:column;gap:8px}
+.sr{display:flex;flex-direction:column;gap:3px}.sh{display:flex;justify-content:space-between;font-size:11px}.sv{font:600 11px Consolas,monospace;color:var(--cy)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;background:rgba(148,163,184,.22);border-radius:3px;outline:0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cy);border:2px solid #06101d;box-shadow:0 0 8px rgba(0,229,255,.7)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--cy);border:2px solid #06101d}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:6px}.r3{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.r4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.r4 .btn{padding:4px 2px;font-size:10px}
+.ni{display:flex;flex-direction:column;gap:2px}.ni label{font:9px monospace;color:var(--dim)}
+.num{width:100%;background:rgba(15,23,42,.9);border:1px solid rgba(148,163,184,.25);border-radius:5px;color:var(--tx);padding:4px 6px;font:11px Consolas,monospace;outline:0;user-select:text;-webkit-user-select:text}.num:focus{border-color:var(--cy)}
+.cr{display:flex;align-items:center;gap:6px}input[type=color]{width:34px;height:26px;border:1px solid rgba(255,255,255,.25);border-radius:6px;background:transparent;cursor:pointer;padding:0}
+.swl{display:flex;gap:5px;flex-wrap:wrap;flex:1}.dot{width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);cursor:pointer}.dot:hover{border-color:#fff}
+.badge{padding:2px 7px;border-radius:99px;font-size:10px;background:rgba(0,229,255,.15);color:var(--cy);border:1px solid rgba(0,229,255,.35)}.badge.static{background:rgba(245,158,11,.16);color:#fcd34d;border-color:rgba(245,158,11,.4)}
+.tr{display:flex;align-items:center;justify-content:space-between;font-size:11px}
+.sw{position:relative;width:36px;height:20px;background:rgba(148,163,184,.25);border-radius:99px;cursor:pointer;border:1px solid rgba(255,255,255,.12);transition:.2s}.sw.on{background:rgba(0,229,255,.45);border-color:var(--cy)}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s}.sw.on::after{transform:translateX(16px)}
+#bottom{position:fixed;bottom:calc(8px + env(safe-area-inset-bottom,0px));left:10px;right:10px;height:32px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;z-index:15;gap:12px}
+#hint{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden}
+#pill{padding:2px 8px;border-radius:5px;background:rgba(0,229,255,.18);border:1px solid rgba(0,229,255,.4);color:var(--cy);font-weight:700;font-size:10px;flex-shrink:0}
+#desc{overflow:hidden;text-overflow:ellipsis}.keys{display:flex;gap:10px;color:var(--dim);font-size:10px;flex-shrink:0}
+kbd{background:rgba(15,23,42,.9);border:1px solid rgba(148,163,184,.35);border-radius:4px;padding:1px 5px;font:10px Consolas,monospace;color:#e2e8f0}
+#toasts{position:fixed;top:calc(68px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{padding:8px 16px;border-radius:8px;background:rgba(8,15,28,.92);border:1px solid var(--cy);color:#fff;font-size:12px;font-weight:600;animation:ti .2s,to .25s 2.1s forwards}
+@keyframes ti{from{opacity:0;transform:translateY(-10px)}}@keyframes to{to{opacity:0;transform:translateY(-8px)}}
+@media(max-width:960px){.keys,.bs{display:none}.side{width:242px}#tl{left:256px}#tr{right:256px}#left.collapsed{transform:translateX(-256px)}#right.collapsed{transform:translateX(256px)}}
+@media(max-width:760px){:root{--top:108px}.tc{order:3;width:100%}.tele{gap:4px}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/","cannon-es":"https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"}}
+</script>
+</head>
+<body>
+<canvas id="viewport"></canvas>
+<header id="top" class="gp">
+  <div class="brand"><div class="logo">P3D</div><div><div class="bt">PHYSICS LAB 3D</div><div class="bs">INTERACTIVE SANDBOX FACILITY</div></div></div>
+  <div class="tc">
+    <button id="b-pause" class="btn warn" title="一時停止 (Space)">⏸ 一時停止</button>
+    <button id="b-resume" class="btn pri" title="再開 (Space)">▶ 再開</button>
+    <button id="b-reset" class="btn" title="初期シーンに戻す (R)">↺ リセット</button>
+    <button id="b-undo" class="btn" title="元に戻す (Ctrl+Z / Cmd+Z)" disabled>↶ Undo</button>
+    <button id="b-redo" class="btn" title="やり直す (Ctrl+Y / Cmd+Shift+Z)" disabled>↷ Redo</button>
+    <button id="b-clear" class="btn dng">🗑 全削除</button>
+    <div class="dv"></div>
+    <button id="b-save" class="btn">💾 保存</button>
+    <button id="b-load" class="btn">📂 読込</button>
+    <button id="b-export" class="btn">⬇ JSON出力</button>
+    <button id="b-import" class="btn">⬆ JSON読込</button>
+    <button id="b-model" class="btn pri" title="GLB / glTF モデルを読み込む（ドラッグ＆ドロップも可）">📥 モデル</button>
+    <div class="dv"></div>
+    <button id="b-sound" class="btn active">🔊 音ON</button>
+  </div>
+  <div class="tele">
+    <div class="chip"><span id="dot"></span><b id="state">RUN</b></div>
+    <div class="chip"><i>FPS</i><b id="h-fps">60</b></div>
+    <div class="chip"><i>OBJ</i><b id="h-obj">0</b></div>
+    <div class="chip"><i>破片</i><b id="h-deb">0</b></div>
+    <div class="chip"><i>G</i><b id="h-g">-9.8</b></div>
+  </div>
+</header>
+<aside id="left" class="side gp"></aside><button id="tl" class="tgl gp" title="左パネル開閉">◀</button>
+<aside id="right" class="side gp"></aside><button id="tr" class="tgl gp" title="右パネル開閉">▶</button>
+<footer id="bottom" class="gp">
+  <div id="hint"><span id="pill">選択ツール</span><span id="desc"></span></div>
+  <div class="keys"><span><kbd>WASD</kbd> 移動</span><span><kbd>ドラッグ</kbd> 視点 / 右ドラッグ 平行移動</span><span><kbd>ホイール</kbd> ズーム</span><span><kbd>Space</kbd> 停止/再開</span><span><kbd>Del</kbd> 削除</span><span><kbd>Ctrl+D</kbd> 複製</span><span><kbd>R</kbd> リセット</span></div>
+</footer>
+<div id="drop" style="display:none;position:fixed;inset:0;z-index:60;background:rgba(0,229,255,.12);border:2px dashed var(--cy);pointer-events:none;align-items:center;justify-content:center;font-size:18px;color:#fff">GLB / glTF をドロップして読み込み</div>
+<div id="toasts"></div>
+<input id="model-file" type="file" accept=".glb,.gltf" style="display:none">
+<input id="file" type="file" accept=".json,application/json" style="display:none">
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import * as CANNON from 'cannon-es';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const $ = id => document.getElementById(id), rad = THREE.MathUtils.degToRad, deg = THREE.MathUtils.radToDeg;
+const STORAGE_KEY = 'physics_lab_3d_saved_scene_v1', MAX_DEBRIS = 120;
+
+/* ---------- presets ---------- */
+const PRESETS = {};
+[
+ ['cube','立方体','標準ブロック','🧊','box',{w:1,h:1,d:1},2,.4,.3,'#38bdf8',.15,.38,1,11.5],
+ ['sphere','球体','標準スフィア','⚪','sphere',{r:.55},1.6,.3,.5,'#a855f7',.2,.3,1,12.5],
+ ['cylinder','円柱','シリンダー','🛢️','cylinder',{rt:.5,rb:.5,h:1.2},2.2,.45,.25,'#10b981',.2,.4,1,11.5],
+ ['cone','円錐','コーン','🔺','cone',{rt:.02,rb:.58,h:1.25},1.8,.45,.2,'#f97316',.15,.45,1,10.5],
+ ['box','直方体','ロングビーム','▬','box',{w:2,h:.65,d:.9},2.8,.5,.2,'#0ea5e9',.12,.45,1,10.5],
+ ['prism','三角柱','プリズム','📐','prism',{r:.65,h:1.1},2,.45,.25,'#ec4899',.18,.35,1,11],
+ ['metal','金属ブロック','高重量・高耐久','🔩','box',{w:1.05,h:1.05,d:1.05},12,.25,.2,'#cbd5e1',.88,.22,1,26,'metal'],
+ ['wood','木製ブロック','軽量・破壊易','🪵','box',{w:1.2,h:.8,d:.9},1.2,.65,.15,'#d49a6a',.04,.78,1,7.2,'wood'],
+ ['rubber','ゴムボール','高反発 (0.95)','🏀','sphere',{r:.52},1,.85,.95,'#f43f5e',.05,.55,0,999],
+ ['ironball','重い鉄球','破壊用大質量','💣','sphere',{r:.72},32,.3,.15,'#475569',.92,.28,0,999,'metal']
+].forEach(([id,name,tag,icon,shape,dims,mass,friction,restitution,color,metalness,roughness,d,breakThreshold,texture]) =>
+  PRESETS[id] = {id,name,tag,icon,shape,dims,mass,friction,restitution,color,metalness,roughness,destructible:!!d,breakThreshold,texture});
+
+const TOOLS = [
+ ['select','🖱️','選択','選択ツール','オブジェクトやロープをクリックして選択します。右パネルで編集・削除できます。'],
+ ['place','📦','配置','配置ツール','床やオブジェクトの上をクリックして、選択中のオブジェクトを配置します。'],
+ ['launch','🚀','投射','投射ツール','クリックした3D方向へオブジェクトを高速で発射します。タワー破壊に最適！'],
+ ['explode','💥','爆発','爆発ツール','クリック地点で衝撃波を伴う爆発を起こし、周囲の物体を吹き飛ばします。'],
+ ['wind','💨','風','風ツール','クリックした地点へ強力な突風を吹き付けます（押し続けると連続噴射）。'],
+ ['pin','📌','固定','固定ツール','クリックしたオブジェクトを空間に固定・解除します。'],
+ ['duplicate','🧬','複製','複製ツール','クリックしたオブジェクトの設定を引き継いで上空に複製します。'],
+ ['delete','❌','削除','削除ツール','クリックしたオブジェクトやロープを削除します。'],
+ ['rope','🪢','ロープ','ロープツール','接続する2つのオブジェクトを順にクリックして、たわむロープで接続します。']
+];
+
+/* ---------- sound ---------- */
+const sfx = {
+  on: true, ctx: null, last: 0,
+  init() { const A = window.AudioContext || window.webkitAudioContext; if (!this.ctx && A) this.ctx = new A(); if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {}); },
+  tone(type, f0, f1, dur, vol) {
+    if (!this.on || !this.ctx) return;
+    try { const c = this.ctx, t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+      o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + dur + .01); } catch {}
+  },
+  noise(dur, vol, type, f0, f1) {
+    if (!this.on) return; this.init(); if (!this.ctx) return;
+    try { const c = this.ctx, t = c.currentTime, n = c.sampleRate * dur | 0, b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (n * .28));
+      const s = c.createBufferSource(); s.buffer = b;
+      const f = c.createBiquadFilter(); f.type = type; f.frequency.setValueAtTime(f0, t); if (f1 !== f0) f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      const g = c.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+      s.connect(f); f.connect(g); g.connect(c.destination); s.start(t); } catch {}
+  },
+  impact(v) { if (!this.on || !this.ctx || v < 1.2) return; const n = performance.now(); if (n - this.last < 45) return; this.last = n; this.tone('triangle', Math.max(55, 160 - v * 4), 35, .09, Math.min(.18, v * .012)); },
+  boom() { this.noise(.45, .45, 'lowpass', 420, 60); },
+  shatter() { this.noise(.18, .24, 'bandpass', 1400, 1400); },
+  launch() { this.init(); this.tone('sine', 220, 75, .15, .16); }
+};
+
+/* ---------- textures ---------- */
+function mkTex(size, draw, rep) {
+  const c = document.createElement('canvas'); c.width = c.height = size; draw(c.getContext('2d'), size);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.anisotropy = 8; }
+  return t;
+}
+const TEX = {
+  floor: mkTex(512, (x, w) => {
+    x.fillStyle = '#0d1524'; x.fillRect(0, 0, w, w);
+    for (const [s, lw, col] of [[128, 2, 'rgba(56,189,248,.12)'], [32, 1, 'rgba(148,163,184,.05)']]) {
+      x.strokeStyle = col; x.lineWidth = lw;
+      for (let i = 0; i <= w; i += s) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, w); x.moveTo(0, i); x.lineTo(w, i); x.stroke(); }
+    }
+  }, 14),
+  wood: mkTex(256, (x, w) => {
+    for (let y = 0; y < w; y += 2) { const s = 200 + Math.sin(y * .14) * 20 + (Math.random() - .5) * 18; x.fillStyle = `rgb(${s},${s * .88},${s * .72})`; x.fillRect(0, y, w, 2); }
+    x.strokeStyle = 'rgba(90,50,20,.25)'; x.lineWidth = 4; x.strokeRect(4, 4, w - 8, w - 8);
+  }),
+  metal: mkTex(256, (x, w) => {
+    x.fillStyle = '#e2e8f0'; x.fillRect(0, 0, w, w);
+    for (let i = 0; i < 220; i++) { const a = .04 + Math.random() * .08; x.fillStyle = Math.random() > .5 ? `rgba(255,255,255,${a})` : `rgba(15,23,42,${a})`; x.fillRect(0, Math.random() * w, w, 1 + Math.random() * 2); }
+    x.strokeStyle = 'rgba(15,23,42,.25)'; x.lineWidth = 6; x.strokeRect(3, 3, w - 6, w - 6);
+  })
+};
+
+/* ---------- renderer / scene ---------- */
+const canvas = $('viewport');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.12;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x07101f);
+scene.fog = new THREE.FogExp2(0x060b16, .0085);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), .04).texture;
+scene.environmentIntensity = .72; pmrem.dispose();
+
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, .1, 350);
+camera.position.set(14, 11, 16);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = .07; controls.target.set(0, 2.5, 0);
+controls.minDistance = 2.5; controls.maxDistance = 95; controls.maxPolarAngle = Math.PI * .492;
+controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+
+scene.add(new THREE.HemisphereLight(0x7dd3fc, 0x0f172a, .65));
+const dirLight = new THREE.DirectionalLight(0xf8fafc, 2.1);
+dirLight.position.set(22, 34, 18); dirLight.castShadow = true; dirLight.shadow.mapSize.set(2048, 2048);
+Object.assign(dirLight.shadow.camera, { near: 2, far: 110, left: -36, right: 36, top: 36, bottom: -36 });
+dirLight.shadow.bias = -.0005; scene.add(dirLight);
+[[0x00e5ff, 35, 45, [-16, 10, -14]], [0xf59e0b, 20, 42, [18, 9, -16]]].forEach(([c, i, d, p]) => { const l = new THREE.PointLight(c, i, d, 1.6); l.position.set(...p); scene.add(l); });
+
+const ARENA = 70;
+const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(ARENA, 2, ARENA),
+  new THREE.MeshPhysicalMaterial({ map: TEX.floor, roughness: .28, metalness: .35, clearcoat: .45, clearcoatRoughness: .22 }));
+floorMesh.position.y = -1; floorMesh.receiveShadow = true; scene.add(floorMesh);
+const trim = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(ARENA + .08, 2.02, ARENA + .08)), new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: .55 }));
+trim.position.y = -1; scene.add(trim);
+const grid = new THREE.GridHelper(ARENA, 70, 0x00e5ff, 0x1e3a5f);
+grid.position.y = .012; grid.material.transparent = true; grid.material.opacity = .35; scene.add(grid);
+const pillarGeo = new THREE.BoxGeometry(1.6, 16, 1.6), pillarMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: .7, roughness: .3 });
+const beaconGeo = new THREE.BoxGeometry(1.7, .35, 1.7), beaconMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff });
+[[-34, -34], [34, -34], [-34, 34], [34, 34]].forEach(([x, z]) => {
+  const p = new THREE.Mesh(pillarGeo, pillarMat); p.position.set(x, 7, z); p.castShadow = p.receiveShadow = true; scene.add(p);
+  const b = new THREE.Mesh(beaconGeo, beaconMat); b.position.set(x, 14.2, z); scene.add(b);
+});
+
+/* ---------- physics world ---------- */
+const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -9.82, 0) });
+world.broadphase = new CANNON.SAPBroadphase(world);
+// Rope nodes keep colliding with the floor, other objects and debris (collision groups), but never with the two
+// objects their own rope is tied to: the end nodes sit right next to the anchor and would otherwise push/jitter.
+if (typeof world.broadphase.needBroadphaseCollision === 'function') {
+  const baseNeedBroadphase = world.broadphase.needBroadphaseCollision.bind(world.broadphase);
+  world.broadphase.needBroadphaseCollision = (a, b) => {
+    if ((a.ropeIgnore && a.ropeIgnore.has(b)) || (b.ropeIgnore && b.ropeIgnore.has(a))) return false;
+    return baseNeedBroadphase(a, b);
+  };
+}
+world.allowSleep = true;
+world.solver.iterations = 12; world.solver.tolerance = .001;
+const groundMat = new CANNON.Material('ground');
+const floorBody = new CANNON.Body({ mass: 0, type: CANNON.Body.STATIC, material: groundMat, position: new CANNON.Vec3(0, -1, 0) });
+floorBody.addShape(new CANNON.Box(new CANNON.Vec3(ARENA / 2, 1, ARENA / 2)));
+world.addBody(floorBody);
+
+const matCache = new Map();
+function getPhysMat(friction, restitution) {
+  const qF = Math.round(friction * 20) / 20, qR = Math.round(restitution * 20) / 20, key = `${qF.toFixed(2)}_${qR.toFixed(2)}`;
+  if (matCache.has(key)) return matCache.get(key);
+  const mat = new CANNON.Material(key), cm = (a, b, f, r) => world.addContactMaterial(new CANNON.ContactMaterial(a, b, { friction: f, restitution: r, contactEquationStiffness: 1e7, contactEquationRelaxation: 3 }));
+  cm(groundMat, mat, qF, qR); cm(mat, mat, qF, qR);
+  for (const [k, m] of matCache) { const [oF, oR] = k.split('_').map(Number); cm(mat, m, Math.sqrt(qF * oF), Math.max(qR, oR) * .65 + Math.min(qR, oR) * .35); }
+  matCache.set(key, mat); return mat;
+}
+
+/* ---------- state ---------- */
+let paused = false, tool = 'select', curType = 'cube', selected = null, idCounter = 1;
+const objs = [], debris = [], effects = [], pending = [], meshMap = new Map();
+const ropes = [];
+let ropeCounter = 1, ropeStartObject = null, selectedRope = null;
+const ws = { gravityStrength: 9.82, gravityDir: -1, globalWind: false, windPower: 18, windAngleDeg: 0, explodePower: 45, explodeRadius: 8.6, launchSpeed: 28, ropeSlack: 1.18, ropeTension: 200000, ropeColor: '#cbd5e1' };
+const spawnCfg = { mass: 2, friction: .4, restitution: .3, scale: 1, color: '#38bdf8', destructible: true, rotX: 0, rotY: 0, rotZ: 0, velX: 0, velY: 0, velZ: 0 };
+const wakeAll = () => { objs.forEach(o => o.body.wakeUp()); debris.forEach(d => d.body.wakeUp()); ropes.forEach(r => r.nodes.forEach(n => n.wakeUp())); };
+
+/* ---------- geometry ---------- */
+function mkGeo(p) {
+  const d = p.dims;
+  switch (p.shape) {
+    case 'box': return new THREE.BoxGeometry(d.w, d.h, d.d);
+    case 'sphere': return new THREE.SphereGeometry(d.r, 28, 20);
+    case 'cylinder': case 'cone': return new THREE.CylinderGeometry(d.rt, d.rb, d.h, 24);
+    case 'prism': return new THREE.CylinderGeometry(d.r, d.r, d.h, 3);
+  }
+}
+function mkShape(p, s) {
+  const d = p.dims;
+  switch (p.shape) {
+    case 'box': return new CANNON.Box(new CANNON.Vec3(d.w * s / 2, d.h * s / 2, d.d * s / 2));
+    case 'sphere': return new CANNON.Sphere(d.r * s);
+    case 'cylinder': return new CANNON.Cylinder(d.rt * s, d.rb * s, d.h * s, 16);
+    case 'cone': return new CANNON.Cylinder(Math.max(.015, d.rt * s), d.rb * s, d.h * s, 16);
+    case 'prism': {
+      const r = d.r * s, h = d.h * s / 2, sx = r * Math.sqrt(3) / 2, c = r / 2, V = CANNON.Vec3;
+      return new CANNON.ConvexPolyhedron({
+        vertices: [new V(0, h, r), new V(sx, h, -c), new V(-sx, h, -c), new V(0, -h, r), new V(sx, -h, -c), new V(-sx, -h, -c)],
+        faces: [[0, 1, 2], [3, 5, 4], [0, 3, 4, 1], [1, 4, 5, 2], [2, 5, 3, 0]]
+      });
+    }
+  }
+}
+const halfH = (p, s) => p.shape === 'sphere' ? p.dims.r * s : p.dims.h * s / 2;
+
+/* ---------- objects ---------- */
+function spawnObject(typeId, o = {}) {
+  const p = PRESETS[typeId] || PRESETS.cube;
+  const scale = o.scale ?? 1, mass = o.mass ?? p.mass, friction = o.friction ?? p.friction, restitution = o.restitution ?? p.restitution;
+  const color = o.color ?? p.color, destructible = o.destructible ?? p.destructible, pinned = !!o.pinned;
+
+  const geo = mkGeo(p), mp = { color: new THREE.Color(color), metalness: p.metalness, roughness: p.roughness };
+  if (p.texture) mp.map = TEX[p.texture];
+  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial(mp));
+  mesh.scale.setScalar(scale); mesh.castShadow = mesh.receiveShadow = true;
+  if (p.model) attachModelVisual(mesh, p);
+  const pinWire = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0xf59e0b }));
+  pinWire.scale.setScalar(1.03); pinWire.visible = pinned; mesh.add(pinWire);
+
+  const pos = o.position || { x: 0, y: halfH(p, scale) + 3, z: 0 };
+  mesh.position.set(pos.x, pos.y, pos.z);
+  if (o.quaternion) mesh.quaternion.set(o.quaternion.x, o.quaternion.y, o.quaternion.z, o.quaternion.w);
+  else mesh.quaternion.setFromEuler(new THREE.Euler(rad(o.rotX ?? 0), rad(o.rotY ?? 0), rad(o.rotZ ?? 0)));
+  scene.add(mesh);
+
+  const body = new CANNON.Body({ mass: pinned ? 0 : mass, type: pinned ? CANNON.Body.STATIC : CANNON.Body.DYNAMIC, material: getPhysMat(friction, restitution),
+    position: new CANNON.Vec3(pos.x, pos.y, pos.z), linearDamping: .02, angularDamping: .04 });
+  body.addShape(mkShape(p, scale));
+  body.quaternion.set(mesh.quaternion.x, mesh.quaternion.y, mesh.quaternion.z, mesh.quaternion.w);
+  if (!pinned && o.velocity) body.velocity.set(o.velocity.x, o.velocity.y, o.velocity.z);
+  if (!pinned && o.angularVelocity) body.angularVelocity.set(o.angularVelocity.x, o.angularVelocity.y, o.angularVelocity.z);
+
+  const objectId = Number.isInteger(o.id) ? o.id : idCounter++;
+  idCounter = Math.max(idCounter, objectId + 1);
+  const obj = { id: objectId, typeId: p.id, preset: p, mesh, pinWire, body, mass, friction, restitution, scale, color, destructible, pinned, alive: true };
+  body.addEventListener('collide', e => {
+    if (!obj.alive) return;
+    let v = 0; try { v = Math.abs(e.contact.getImpactVelocityAlongNormal()); } catch { return; }
+    if (v > 1.3) sfx.impact(v);
+    if (obj.destructible && v > 3) {
+      const om = e.body && e.body.mass > 0 ? e.body.mass : obj.mass;
+      const eff = v * Math.min(2.6, Math.max(.75, Math.sqrt(om / Math.max(.5, obj.mass))));
+      if (eff >= p.breakThreshold) pending.push({ obj, impact: eff });
+    }
+  });
+  world.addBody(body); objs.push(obj); meshMap.set(mesh, obj);
+  return obj;
+}
+
+
+/* ---------- ropes ---------- */
+const ROPE_NODE_COUNT = 14;
+const MAX_ROPES = 40; // 14 nodes + tube mesh per rope: cap the total to keep the frame rate stable
+const ROPE_CURVE_SEGMENTS = 48;
+const ROPE_RADIAL_SEGMENTS = 6;
+const ROPE_RADIUS = .035;
+const ROPE_FLOOR_TOP = 0; // Cannon floor top: center -1 + half-height 1
+
+function makeRopeGeometry() {
+  const geo = new THREE.BufferGeometry();
+  const count = (ROPE_CURVE_SEGMENTS + 1) * ROPE_RADIAL_SEGMENTS;
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(count * 3, 3).setUsage(THREE.DynamicDrawUsage));
+  const indices = [];
+  for (let i = 0; i < ROPE_CURVE_SEGMENTS; i++) {
+    for (let j = 0; j < ROPE_RADIAL_SEGMENTS; j++) {
+      const a = i * ROPE_RADIAL_SEGMENTS + j;
+      const b = i * ROPE_RADIAL_SEGMENTS + (j + 1) % ROPE_RADIAL_SEGMENTS;
+      const c = (i + 1) * ROPE_RADIAL_SEGMENTS + j;
+      const d = (i + 1) * ROPE_RADIAL_SEGMENTS + (j + 1) % ROPE_RADIAL_SEGMENTS;
+      indices.push(a, c, b, b, c, d);
+    }
+  }
+  geo.setIndex(indices);
+  return geo;
+}
+
+function localSurfaceAnchor(obj, worldDirection) {
+  const q = obj.body.quaternion;
+  const inverse = new CANNON.Quaternion(-q.x, -q.y, -q.z, q.w);
+  const dir = inverse.vmult(new CANNON.Vec3(worldDirection.x, worldDirection.y, worldDirection.z));
+  dir.normalize();
+  const d = obj.preset.dims, scale = obj.scale;
+  let distance = .5;
+  switch (obj.preset.shape) {
+    case 'sphere':
+      distance = d.r * scale;
+      break;
+    case 'box': {
+      const hx = d.w * scale / 2, hy = d.h * scale / 2, hz = d.d * scale / 2;
+      distance = Math.min(hx / Math.max(1e-6, Math.abs(dir.x)), hy / Math.max(1e-6, Math.abs(dir.y)), hz / Math.max(1e-6, Math.abs(dir.z)));
+      break;
+    }
+    case 'cylinder': case 'cone': {
+      const h = d.h * scale, rb = d.rb * scale, rt = Math.max(.015, d.rt * scale);
+      const radial = Math.hypot(dir.x, dir.z), slope = (rt - rb) / h;
+      const denom = radial - slope * dir.y;
+      const sideT = denom > 1e-6 ? (rb + slope * h / 2) / denom : Infinity;
+      const sideY = dir.y * sideT;
+      if (sideT > 0 && Math.abs(sideY) <= h / 2 + 1e-5) distance = sideT;
+      else {
+        const capY = dir.y >= 0 ? h / 2 : -h / 2;
+        const capR = dir.y >= 0 ? rt : rb;
+        const capT = Math.abs(dir.y) > 1e-6 ? capY / dir.y : Infinity;
+        distance = capT > 0 && radial * capT <= capR + 1e-5 ? capT : Math.min(h / 2, Math.max(rb, rt));
+      }
+      break;
+    }
+    default:
+      if (!obj.mesh.geometry.boundingSphere) obj.mesh.geometry.computeBoundingSphere();
+      distance = (obj.mesh.geometry.boundingSphere?.radius || .5) * scale;
+  }
+  return dir.scale(distance * 1.015);
+}
+
+function setRopeTension(rope, tension) {
+  const value = THREE.MathUtils.clamp(Number(tension), 100, 1000000);
+  rope.tension = value;
+  for (const constraint of rope.constraints) {
+    constraint.maxForce = value;
+    for (const equation of constraint.equations || []) {
+      equation.maxForce = value;
+      equation.minForce = -value;
+    }
+  }
+  rope.nodes.forEach(node => node.wakeUp());
+}
+
+function curvePointAtDistance(samples, cumulative, distance) {
+  const total = cumulative[cumulative.length - 1];
+  const target = THREE.MathUtils.clamp(distance, 0, total);
+  let i = 1;
+  while (i < cumulative.length && cumulative[i] < target) i++;
+  const lo = Math.max(0, i - 1), hi = Math.min(i, cumulative.length - 1);
+  const a = cumulative[lo], b = cumulative[hi];
+  const t = b > a ? (target - a) / (b - a) : 0;
+  return samples[lo].clone().lerp(samples[hi], t);
+}
+
+function anchorWorldPosition(obj, anchor) {
+  const local = new CANNON.Vec3(anchor.x, anchor.y, anchor.z);
+  const rotated = obj.body.quaternion.vmult(local);
+  return new THREE.Vector3(
+    obj.body.position.x + rotated.x,
+    obj.body.position.y + rotated.y,
+    obj.body.position.z + rotated.z
+  );
+}
+
+function createRope(objA, objB, options = {}) {
+  if (!objA?.alive || !objB?.alive || objA === objB) return null;
+  const centerA = new THREE.Vector3(objA.body.position.x, objA.body.position.y, objA.body.position.z);
+  const centerB = new THREE.Vector3(objB.body.position.x, objB.body.position.y, objB.body.position.z);
+  const centerDirection = centerB.clone().sub(centerA);
+  if (centerDirection.length() < .15) return null;
+  centerDirection.normalize();
+
+  const anchorA = options.anchorA
+    ? new CANNON.Vec3(options.anchorA.x, options.anchorA.y, options.anchorA.z)
+    : localSurfaceAnchor(objA, centerDirection);
+  const anchorB = options.anchorB
+    ? new CANNON.Vec3(options.anchorB.x, options.anchorB.y, options.anchorB.z)
+    : localSurfaceAnchor(objB, centerDirection.clone().negate());
+  const worldA = anchorWorldPosition(objA, anchorA);
+  const worldB = anchorWorldPosition(objB, anchorB);
+  const span = worldB.clone().sub(worldA);
+  const chord = span.length();
+  if (chord < .1) return null;
+  const direction = span.clone().normalize();
+  const slack = THREE.MathUtils.clamp(Number(options.slack ?? ws.ropeSlack), 1.02, 2.5);
+  const tension = THREE.MathUtils.clamp(Number(options.tension ?? ws.ropeTension), 100, 1000000);
+  const color = options.color || ws.ropeColor || '#cbd5e1';
+  const sag = Math.min(chord * .48, chord * Math.sqrt(Math.max(0, slack * slack - 1)) * .48);
+  const control = [];
+  for (let i = 0; i <= 16; i++) {
+    const t = i / 16;
+    const point = worldA.clone().lerp(worldB, t);
+    point.y -= sag * Math.sin(Math.PI * t);
+    control.push(point);
+  }
+  const initial = new THREE.CatmullRomCurve3(control);
+  const samples = initial.getPoints(240);
+  const cumulative = [0];
+  for (let i = 1; i < samples.length; i++) cumulative.push(cumulative[i - 1] + samples[i].distanceTo(samples[i - 1]));
+  const segmentLength = cumulative[cumulative.length - 1] / (ROPE_NODE_COUNT + 1);
+  const nodes = [];
+  for (let i = 0; i < ROPE_NODE_COUNT; i++) {
+    const point = curvePointAtDistance(samples, cumulative, (i + .5) * segmentLength);
+    // Keep the node sphere above the floor at creation; deep initial penetration can defeat contact resolution.
+    point.y = Math.max(point.y, ROPE_FLOOR_TOP + ROPE_RADIUS + .01);
+    const body = new CANNON.Body({
+      mass: .045,
+      material: getPhysMat(.15, .02),
+      position: new CANNON.Vec3(point.x, point.y, point.z),
+      linearDamping: .08,
+      angularDamping: .2
+    });
+    body.addShape(new CANNON.Sphere(ROPE_RADIUS));
+    // Rope nodes collide with the world and regular objects, but not with other rope nodes.
+    body.collisionFilterGroup = 2;
+    body.collisionFilterMask = 1;
+    body.collisionResponse = true;
+    // A sleeping node would stay frozen while an end object moves, stretching or freezing the rope.
+    body.allowSleep = false;
+    body.ropeIgnore = new Set([objA.body, objB.body]);
+    world.addBody(body);
+    nodes.push(body);
+  }
+
+  const constraints = [];
+  // Compute the node-side pivots from the actual world-space anchors.
+  // PointToPointConstraint expects each pivot in its body's LOCAL coordinates.
+  function worldPointToBodyLocal(body, worldPoint) {
+    const offset = new CANNON.Vec3(
+      worldPoint.x - body.position.x,
+      worldPoint.y - body.position.y,
+      worldPoint.z - body.position.z
+    );
+    const inverseRotation = new CANNON.Quaternion(
+      -body.quaternion.x,
+      -body.quaternion.y,
+      -body.quaternion.z,
+      body.quaternion.w
+    );
+    return inverseRotation.vmult(offset);
+  }
+  const firstPivot = worldPointToBodyLocal(nodes[0], worldA);
+  const lastPivot = worldPointToBodyLocal(nodes[nodes.length - 1], worldB);
+  constraints.push(new CANNON.PointToPointConstraint(objA.body, anchorA, nodes[0], firstPivot, tension));
+  for (let i = 0; i < nodes.length - 1; i++) {
+    constraints.push(new CANNON.DistanceConstraint(nodes[i], nodes[i + 1], segmentLength, tension));
+  }
+  constraints.push(new CANNON.PointToPointConstraint(objB.body, anchorB, nodes[nodes.length - 1], lastPivot, tension));
+  constraints.forEach(c => world.addConstraint(c));
+
+  const material = new THREE.MeshStandardMaterial({ color, roughness: .82, metalness: .12 });
+  const mesh = new THREE.Mesh(makeRopeGeometry(), material);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  mesh.frustumCulled = false;
+  mesh.userData.ropeId = Number.isInteger(options.id) ? options.id : ropeCounter;
+  scene.add(mesh);
+  const rope = { id: Number.isInteger(options.id) ? options.id : ropeCounter++, objA, objB, anchorA, anchorB, nodes, constraints, mesh, slack, tension, color,
+    segmentLength, lengthPerSlack: segmentLength * (ROPE_NODE_COUNT + 1) / slack };
+  ropeCounter = Math.max(ropeCounter, rope.id + 1);
+  ropes.push(rope);
+  // Keep both end objects awake while the rope exists, so a resting object cannot silently soak up rope forces.
+  for (const o of [objA, objB]) { o.ropeRefs = (o.ropeRefs || 0) + 1; o.body.allowSleep = false; o.body.wakeUp(); }
+  updateRopeMesh(rope);
+  refreshRopeList();
+  return rope;
+}
+
+function updateRopeMesh(rope) {
+  if (!rope.objA.alive || !rope.objB.alive) return;
+  const points = [anchorWorldPosition(rope.objA, rope.anchorA)];
+  for (const body of rope.nodes) points.push(new THREE.Vector3(body.position.x, body.position.y, body.position.z));
+  points.push(anchorWorldPosition(rope.objB, rope.anchorB));
+  const curve = new THREE.CatmullRomCurve3(points);
+  const centers = curve.getPoints(ROPE_CURVE_SEGMENTS);
+  const attr = rope.mesh.geometry.getAttribute('position');
+  const tangent = new THREE.Vector3(), reference = new THREE.Vector3(), normal = new THREE.Vector3(), binormal = new THREE.Vector3();
+  for (let i = 0; i <= ROPE_CURVE_SEGMENTS; i++) {
+    tangent.subVectors(centers[Math.min(i + 1, ROPE_CURVE_SEGMENTS)], centers[Math.max(0, i - 1)]).normalize();
+    reference.set(0, 1, 0);
+    if (Math.abs(tangent.dot(reference)) > .92) reference.set(1, 0, 0);
+    normal.crossVectors(tangent, reference).normalize();
+    binormal.crossVectors(tangent, normal).normalize();
+    for (let j = 0; j < ROPE_RADIAL_SEGMENTS; j++) {
+      const angle = j / ROPE_RADIAL_SEGMENTS * Math.PI * 2;
+      const vertex = centers[i].clone()
+        .addScaledVector(normal, Math.cos(angle) * ROPE_RADIUS)
+        .addScaledVector(binormal, Math.sin(angle) * ROPE_RADIUS);
+      attr.setXYZ(i * ROPE_RADIAL_SEGMENTS + j, vertex.x, vertex.y, vertex.z);
+    }
+  }
+  attr.needsUpdate = true;
+  rope.mesh.geometry.computeVertexNormals();
+  rope.mesh.geometry.computeBoundingSphere();
+}
+
+function removeRope(rope) {
+  if (!rope) return;
+  for (const constraint of rope.constraints) world.removeConstraint(constraint);
+  for (const body of rope.nodes) world.removeBody(body);
+  scene.remove(rope.mesh);
+  rope.mesh.geometry.dispose();
+  rope.mesh.material.dispose();
+  const index = ropes.indexOf(rope);
+  if (index >= 0) ropes.splice(index, 1);
+  for (const o of [rope.objA, rope.objB]) {
+    o.ropeRefs = Math.max(0, (o.ropeRefs || 1) - 1);
+    if (!o.ropeRefs && o.alive) o.body.allowSleep = true;
+  }
+  if (selectedRope === rope) selectedRope = null;
+  refreshRopeUI();
+}
+function removeRopesForObject(obj) {
+  for (const rope of [...ropes]) if (rope.objA === obj || rope.objB === obj) removeRope(rope);
+}
+
+/* ropeSlack applied to existing ropes: re-space the DistanceConstraints and scale the end pivots */
+function setRopeSlack(rope, slack) {
+  const value = THREE.MathUtils.clamp(Number(slack), 1.02, 2.5);
+  rope.slack = value;
+  // Do not shorten below the current end-to-end distance (+2%), or the constraints would yank the objects together.
+  const chord = anchorWorldPosition(rope.objA, rope.anchorA).distanceTo(anchorWorldPosition(rope.objB, rope.anchorB));
+  const length = Math.max(rope.lengthPerSlack * value, chord * 1.02);
+  const segment = length / (ROPE_NODE_COUNT + 1);
+  const ratio = segment / rope.segmentLength;
+  if (!Number.isFinite(ratio) || ratio <= 0) return;
+  rope.segmentLength = segment;
+  for (const c of rope.constraints) if (c instanceof CANNON.DistanceConstraint) c.distance = segment;
+  const first = rope.constraints[0], last = rope.constraints[rope.constraints.length - 1];
+  first.pivotB.scale(ratio, first.pivotB);
+  last.pivotB.scale(ratio, last.pivotB);
+  rope.nodes.forEach(n => n.wakeUp());
+}
+
+/* rope picking / selection / single delete */
+function ropeWorldPoints(rope) {
+  const pts = [anchorWorldPosition(rope.objA, rope.anchorA)];
+  for (const n of rope.nodes) pts.push(new THREE.Vector3(n.position.x, n.position.y, n.position.z));
+  pts.push(anchorWorldPosition(rope.objB, rope.anchorB));
+  return pts;
+}
+// Ropes are thin, so pick by ray-to-polyline distance (tolerance grows with distance) instead of triangle hits.
+function pickRope() {
+  let best = null;
+  const onRay = new THREE.Vector3();
+  for (const rope of ropes) {
+    if (!rope.objA.alive || !rope.objB.alive) continue;
+    const pts = ropeWorldPoints(rope);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const d2 = raycaster.ray.distanceSqToSegment(pts[i], pts[i + 1], onRay);
+      const along = onRay.distanceTo(raycaster.ray.origin), tol = Math.max(.1, along * .012);
+      if (d2 <= tol * tol && (!best || along < best.along)) best = { rope, along };
+    }
+  }
+  return best;
+}
+function selectRope(rope) {
+  selectObject(null);
+  selectedRope = rope && ropes.includes(rope) ? rope : null;
+  refreshRopeUI();
+}
+function deleteRope(rope) {
+  if (!rope || !ropes.includes(rope)) return;
+  const before = beginHistory(), id = rope.id;
+  removeRope(rope);
+  commitHistory(before, 'ロープ削除');
+  toast(`ロープ #${id} を削除しました`);
+}
+function refreshRopeList() {
+  const box = $('rope-list'); if (!box) return;
+  $('rope-count').textContent = ropes.length;
+  box.textContent = '';
+  if (!ropes.length) {
+    const empty = document.createElement('div'); empty.style.cssText = 'color:var(--dim);font-size:10px'; empty.textContent = 'ロープなし（🪢ツールで接続）'; box.appendChild(empty); return;
+  }
+  for (const r of ropes) {
+    const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:4px';
+    const sel = document.createElement('button'); sel.className = 'btn' + (r === selectedRope ? ' active' : '');
+    sel.style.cssText = 'flex:1;justify-content:flex-start;padding:4px 6px;font-size:10px;overflow:hidden;text-overflow:ellipsis';
+    sel.textContent = `#${r.id} ${r.objA.preset.name}#${r.objA.id} ↔ ${r.objB.preset.name}#${r.objB.id}`;
+    sel.onclick = () => selectRope(r);
+    const del = document.createElement('button'); del.className = 'btn dng'; del.style.cssText = 'padding:4px 7px;font-size:10px';
+    del.textContent = '🗑'; del.title = 'このロープを削除'; del.onclick = () => deleteRope(r);
+    row.append(sel, del); box.appendChild(row);
+  }
+}
+function refreshRopeUI() {
+  for (const r of ropes) r.mesh.material.emissive.setHex(r === selectedRope ? 0x0e7490 : 0x000000);
+  refreshRopeList();
+  const bar = $('ropebar'); if (!bar) return;
+  bar.style.display = selectedRope ? 'flex' : 'none';
+  if (selectedRope) {
+    $('rope-label').textContent = `ロープ #${selectedRope.id}`;
+    $('ititle').textContent = '⚙ ロープ編集';
+    const b = $('ibadge'); b.textContent = 'ロープ選択中'; b.classList.remove('static');
+  }
+}
+
+/* watchdog: rebuild a rope whose nodes went NaN / flew away / stretched far beyond their spacing */
+function ropeIsUnstable(rope) {
+  const limit = rope.segmentLength * 4;
+  let prev = null;
+  for (const n of rope.nodes) {
+    const p = n.position, v = n.velocity;
+    if (!Number.isFinite(p.x + p.y + p.z + v.x + v.y + v.z)) return true;
+    if (Math.abs(p.x) > 200 || Math.abs(p.z) > 200 || p.y > 200 || p.y < -45) return true;
+    if (v.lengthSquared() > 8100) return true;
+    if (prev && prev.distanceTo(p) > limit) return true;
+    prev = p;
+  }
+  return false;
+}
+function rebuildRope(rope) {
+  const a = rope.objA, b = rope.objB, wasSelected = rope === selectedRope;
+  const opts = { id: rope.id, anchorA: { x: rope.anchorA.x, y: rope.anchorA.y, z: rope.anchorA.z }, anchorB: { x: rope.anchorB.x, y: rope.anchorB.y, z: rope.anchorB.z },
+    slack: rope.slack, tension: rope.tension, color: rope.color };
+  removeRope(rope);
+  const fresh = createRope(a, b, opts);
+  if (fresh && wasSelected) { selectedRope = fresh; refreshRopeUI(); }
+  return fresh;
+}
+function checkRopes() {
+  if (gizmoDrag) return;
+  const now = performance.now();
+  let rebuilt = 0, dropped = 0;
+  for (const rope of [...ropes]) {
+    if (!rope.objA.alive || !rope.objB.alive || !ropeIsUnstable(rope)) continue;
+    // A rope that keeps going unstable (3 rebuilds within 10 s) is removed instead of resetting in a loop.
+    const log = (rope.rebuildLog || []).filter(t => now - t < 10000);
+    if (log.length >= 3) { removeRope(rope); dropped++; continue; }
+    const fresh = rebuildRope(rope);
+    if (fresh) { fresh.rebuildLog = [...log, now]; rebuilt++; } else dropped++;
+  }
+  if (rebuilt) toast(`不安定になったロープを ${rebuilt} 本再構築しました`);
+  if (dropped) toast(`再構築を繰り返したロープ ${dropped} 本を削除しました`);
+}
+
+function removeObject(obj) {
+  if (!obj || !obj.alive) return;
+  removeRopesForObject(obj);
+  if (ropeStartObject === obj) ropeStartObject = null;
+  obj.alive = false;
+  if (selected === obj) selectObject(null);
+  world.removeBody(obj.body); scene.remove(obj.mesh); meshMap.delete(obj.mesh);
+  obj.mesh.geometry.dispose(); obj.mesh.material.dispose(); obj.pinWire.geometry.dispose(); obj.pinWire.material.dispose();
+  const i = objs.indexOf(obj); if (i !== -1) objs.splice(i, 1);
+  wakeAll();
+}
+function setScale(obj, s) {
+  obj.scale = s; obj.mesh.scale.setScalar(s);
+  while (obj.body.shapes.length) obj.body.removeShape(obj.body.shapes[0]);
+  obj.body.addShape(mkShape(obj.preset, s));
+  obj.body.updateMassProperties(); obj.body.updateBoundingRadius(); obj.body.aabbNeedsUpdate = true; obj.body.wakeUp();
+}
+function togglePin(obj) {
+  if (!obj || !obj.alive) return;
+  const historyBefore = beginHistory();
+  obj.pinned = !obj.pinned;
+  if (obj.pinned) { obj.body.mass = 0; obj.body.type = CANNON.Body.STATIC; obj.body.velocity.setZero(); obj.body.angularVelocity.setZero(); }
+  else { obj.body.mass = obj.mass; obj.body.type = CANNON.Body.DYNAMIC; }
+  obj.body.updateMassProperties(); obj.body.wakeUp(); obj.pinWire.visible = obj.pinned;
+  if (selected === obj) refreshInspector();
+  commitHistory(historyBefore, '固定切替');
+  toast(`${obj.preset.name} #${obj.id} を${obj.pinned ? '固定' : '固定解除'}しました`);
+}
+function duplicate(obj) {
+  if (!obj || !obj.alive) return;
+  const historyBefore = beginHistory();
+  const b = obj.body, q = b.quaternion;
+  const c = spawnObject(obj.typeId, { position: { x: b.position.x + .35, y: b.position.y + 1.15 * obj.scale, z: b.position.z + .35 }, quaternion: { x: q.x, y: q.y, z: q.z, w: q.w },
+    mass: obj.mass, friction: obj.friction, restitution: obj.restitution, scale: obj.scale, color: obj.color, destructible: obj.destructible, pinned: obj.pinned });
+  selectObject(c); commitHistory(historyBefore, '複製'); toast(`${c.preset.name} を複製しました`);
+}
+
+/* ---------- shatter / effects ---------- */
+const debrisGeo = new THREE.BoxGeometry(1, 1, 1);
+function shatter(obj, intensity = 14) {
+  if (!obj || !obj.alive) return;
+  const c = obj.body.position.clone(), bv = obj.body.velocity.clone(), s = obj.scale, color = obj.color, n = s > 1.4 ? 8 : 6, p = obj.preset, mass = obj.mass;
+  removeObject(obj); sfx.shatter();
+  burst(new THREE.Vector3(c.x, c.y, c.z), color, 18, 7);
+  while (debris.length + n > MAX_DEBRIS && debris.length) removeDebris(debris[0]);
+  const pm = getPhysMat(.45, .25), R = () => Math.random() - .5;
+  for (let i = 0; i < n; i++) {
+    const sx = (.2 + Math.random() * .22) * s, sy = (.18 + Math.random() * .22) * s, sz = (.2 + Math.random() * .22) * s;
+    const mesh = new THREE.Mesh(debrisGeo, new THREE.MeshStandardMaterial({ color: new THREE.Color(color), roughness: p.roughness, metalness: p.metalness }));
+    mesh.scale.set(sx, sy, sz); mesh.castShadow = mesh.receiveShadow = true;
+    const ox = R() * .65 * s, oy = R() * .65 * s, oz = R() * .65 * s;
+    mesh.position.set(c.x + ox, c.y + oy, c.z + oz); scene.add(mesh);
+    const body = new CANNON.Body({ mass: Math.max(.15, mass / n * .8), material: pm, position: new CANNON.Vec3(c.x + ox, c.y + oy, c.z + oz), linearDamping: .05, angularDamping: .08 });
+    body.addShape(new CANNON.Box(new CANNON.Vec3(sx / 2, sy / 2, sz / 2)));
+    const b = Math.min(12, intensity * .45);
+    body.velocity.set(bv.x * .6 + R() * b, bv.y * .6 + Math.random() * b * .6 + 1.5, bv.z * .6 + R() * b);
+    body.angularVelocity.set(R() * 14, R() * 14, R() * 14);
+    world.addBody(body);
+    debris.push({ mesh, body, baseScale: new THREE.Vector3(sx, sy, sz), age: 0, maxAge: 7 + Math.random() * 4 });
+  }
+}
+function removeDebris(d) {
+  world.removeBody(d.body); scene.remove(d.mesh); d.mesh.material.dispose();
+  const i = debris.indexOf(d); if (i !== -1) debris.splice(i, 1);
+}
+function burst(origin, hex, count = 24, speed = 10) {
+  const pos = new Float32Array(count * 3), vel = [];
+  for (let i = 0; i < count; i++) {
+    pos.set([origin.x, origin.y, origin.z], i * 3);
+    const th = Math.random() * Math.PI * 2, ph = Math.acos(2 * Math.random() - 1), sp = speed * (.35 + Math.random() * .85);
+    vel.push(new THREE.Vector3(Math.sin(ph) * Math.cos(th) * sp, Math.abs(Math.cos(ph)) * sp + 1.5, Math.sin(ph) * Math.sin(th) * sp));
+  }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: new THREE.Color(hex), size: .24, transparent: true, opacity: .95, depthWrite: false }));
+  scene.add(pts); effects.push({ type: 'p', mesh: pts, vel, age: 0, maxAge: .75 });
+}
+function explode(origin) {
+  const radius = ws.explodeRadius, power = ws.explodePower;
+  sfx.boom();
+  const sw = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), new THREE.MeshBasicMaterial({ color: 0xff7b00, transparent: true, opacity: .65 }));
+  sw.position.copy(origin); scene.add(sw);
+  const light = new THREE.PointLight(0xff8c00, 120, radius * 2.5, 1.5); light.position.set(origin.x, origin.y + .6, origin.z); scene.add(light);
+  effects.push({ type: 's', mesh: sw, light, maxR: radius, age: 0, maxAge: .42 });
+  burst(origin, '#ff9d00', 42, 16); burst(origin, '#00e5ff', 18, 12);
+  const c = new CANNON.Vec3(origin.x, origin.y, origin.z), hits = [];
+  for (const o of objs) {
+    if (o.pinned) continue;
+    const dl = o.body.position.vsub(c), dist = dl.length();
+    if (dist >= radius) continue;
+    o.body.wakeUp();
+    const fo = Math.pow(1 - dist / radius, 1.35), dir = dist > .05 ? dl.unit() : new CANNON.Vec3(0, 1, 0);
+    dir.y += .42; dir.normalize();
+    o.body.applyImpulse(dir.scale(power * fo * Math.min(3.5, Math.max(.8, Math.sqrt(o.mass)))));
+    const sev = power * fo / Math.max(.8, o.mass * .25);
+    if (o.destructible && sev > o.preset.breakThreshold * 1.15) hits.push({ o, sev });
+  }
+  for (const d of debris) {
+    const dl = d.body.position.vsub(c), dist = dl.length();
+    if (dist >= radius) continue;
+    d.body.wakeUp();
+    const dir = dist > .05 ? dl.unit() : new CANNON.Vec3(0, 1, 0); dir.y += .4;
+    d.body.applyImpulse(dir.scale(power * .22 * (1 - dist / radius)));
+  }
+  hits.forEach(h => shatter(h.o, h.sev));
+}
+function windBlast(target) {
+  const dir = target.clone().sub(camera.position).normalize(), power = ws.windPower * 2.2;
+  burst(target.clone().addScaledVector(dir, -3), '#38bdf8', 10, 18);
+  const ct = new CANNON.Vec3(target.x, target.y, target.z), cd = new CANNON.Vec3(dir.x, dir.y + .12, dir.z); cd.normalize();
+  for (const o of objs) {
+    if (o.pinned) continue;
+    const dist = o.body.position.distanceTo(ct);
+    if (dist < 11) { o.body.wakeUp(); o.body.applyImpulse(cd.scale(power * .14 * (1 - dist / 11))); }
+  }
+}
+function updateEffects(dt) {
+  for (let i = effects.length - 1; i >= 0; i--) {
+    const fx = effects[i]; fx.age += dt; const p = Math.min(1, fx.age / fx.maxAge);
+    if (fx.type === 's') {
+      fx.mesh.scale.setScalar(.5 + fx.maxR * (1 - Math.pow(1 - p, 3)));
+      fx.mesh.material.opacity = .65 * (1 - p); fx.light.intensity = 120 * (1 - p);
+      if (p >= 1) { scene.remove(fx.mesh, fx.light); fx.mesh.geometry.dispose(); fx.mesh.material.dispose(); effects.splice(i, 1); }
+    } else {
+      const a = fx.mesh.geometry.getAttribute('position');
+      fx.vel.forEach((v, j) => { v.y -= 9.8 * dt; a.setXYZ(j, a.getX(j) + v.x * dt, Math.max(.05, a.getY(j) + v.y * dt), a.getZ(j) + v.z * dt); });
+      a.needsUpdate = true; fx.mesh.material.opacity = 1 - p;
+      if (p >= 1) { scene.remove(fx.mesh); fx.mesh.geometry.dispose(); fx.mesh.material.dispose(); effects.splice(i, 1); }
+    }
+  }
+  for (let i = debris.length - 1; i >= 0; i--) {
+    const d = debris[i]; d.age += dt; const p = d.body.position;
+    if (p.y < -30 || p.y > 120 || d.age >= d.maxAge) { removeDebris(d); continue; }
+    if (d.age > d.maxAge - 1.2) d.mesh.scale.copy(d.baseScale).multiplyScalar(Math.max(.05, (d.maxAge - d.age) / 1.2));
+    d.mesh.position.set(p.x, p.y, p.z); const q = d.body.quaternion; d.mesh.quaternion.set(q.x, q.y, q.z, q.w);
+  }
+}
+
+/* ---------- selection / preview ---------- */
+const selHelper = new THREE.BoxHelper(new THREE.Mesh(), 0x00e5ff); selHelper.visible = false; scene.add(selHelper);
+const ringGeo = new THREE.RingGeometry(.45, .58, 32); ringGeo.rotateX(-Math.PI / 2);
+const ringMat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, side: THREE.DoubleSide, transparent: true, opacity: .75 });
+const ring = new THREE.Mesh(ringGeo, ringMat); ring.visible = false; scene.add(ring);
+let preview = null;
+function rebuildPreview() {
+  if (preview) { scene.remove(preview); preview.geometry.dispose(); preview.material.dispose(); }
+  const geo = mkGeo(PRESETS[curType]);
+  preview = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: new THREE.Color(spawnCfg.color), transparent: true, opacity: .42, depthWrite: false }));
+  preview.scale.setScalar(spawnCfg.scale);
+  preview.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x00e5ff })));
+  preview.visible = false; scene.add(preview);
+}
+function selectObject(o) {
+  selected = o && o.alive ? o : null;
+  selectedRope = null;
+  if (selected) { selHelper.setFromObject(selected.mesh); selHelper.visible = true; } else selHelper.visible = false;
+  refreshInspector();
+  refreshRopeUI();
+}
+function clearAll() {
+  while (ropes.length) removeRope(ropes[0]);
+  ropeStartObject = null;
+  while (objs.length) removeObject(objs[0]);
+  while (debris.length) removeDebris(debris[0]);
+  selectObject(null);
+}
+function starterScene() {
+  clearAll();
+  const cols = ['#38bdf8', '#0ea5e9', '#a855f7', '#10b981'];
+  for (let y = 0; y < 5; y++) for (let x = -1; x <= 1; x++) {
+    const w = y % 2 === 1;
+    spawnObject(w ? 'wood' : 'cube', { position: { x: x * 1.15 - 3.5, y: .5 + y * 1.02, z: -2 }, color: w ? '#d49a6a' : cols[y % 4] });
+  }
+  spawnObject('cylinder', { position: { x: 4.5, y: .65, z: -3.5 }, pinned: true, color: '#64748b', scale: 1.1 });
+  spawnObject('cylinder', { position: { x: 4.5, y: .65, z: .5 }, pinned: true, color: '#64748b', scale: 1.1 });
+  spawnObject('box', { position: { x: 4.5, y: 1.75, z: -1.5 }, rotY: 90, scale: 2.2, color: '#38bdf8', pinned: true });
+  spawnObject('cone', { position: { x: 4.5, y: 2.8, z: -2.4 }, color: '#f97316' });
+  spawnObject('prism', { position: { x: 4.5, y: 2.8, z: -.6 }, color: '#ec4899' });
+  spawnObject('rubber', { position: { x: .5, y: 4.5, z: 3.5 }, color: '#f43f5e' });
+  spawnObject('rubber', { position: { x: 2, y: 6, z: 4 }, color: '#10b981' });
+  spawnObject('metal', { position: { x: -3.5, y: .55, z: 3.2 } });
+  spawnObject('ironball', { position: { x: -8.5, y: 1.2, z: -2 } });
+}
+
+/* ---------- save / load ---------- */
+function serialize() {
+  const v = a => ({ x: a.x, y: a.y, z: a.z });
+  return { version: 1, timestamp: new Date().toISOString(), world: { ...ws }, objects: objs.map(o => ({
+    id: o.id, typeId: o.typeId, position: v(o.body.position), quaternion: { ...v(o.body.quaternion), w: o.body.quaternion.w },
+    velocity: v(o.body.velocity), angularVelocity: v(o.body.angularVelocity),
+    mass: o.mass, friction: o.friction, restitution: o.restitution, scale: o.scale, color: o.color, destructible: o.destructible, pinned: o.pinned })),
+    ropes: ropes.map(r => ({ id: r.id, objectA: r.objA.id, objectB: r.objB.id, anchorA: { x: r.anchorA.x, y: r.anchorA.y, z: r.anchorA.z }, anchorB: { x: r.anchorB.x, y: r.anchorB.y, z: r.anchorB.z }, slack: r.slack, tension: r.tension, color: r.color })) };
+}
+function deserialize(data) {
+  if (!data || !Array.isArray(data.objects)) throw new Error('無効なシーンデータ形式です');
+  clearAll();
+  if (data.world) { Object.assign(ws, data.world); applyGravity(); }
+  let skipped = 0;
+  data.objects.slice(0, 400).forEach(it => {
+    if (String(it.typeId).startsWith('model:') && !PRESETS[it.typeId]) { skipped++; return; }
+    spawnObject(it.typeId, it);
+  });
+  if (skipped) toast(`未読込のモデル ${skipped} 個をスキップしました（GLBを読み込み直してください）`);
+  const byId = new Map(objs.map(o => [o.id, o]));
+  (Array.isArray(data.ropes) ? data.ropes : []).slice(0, MAX_ROPES).forEach(it => {
+    const a = byId.get(it.objectA), b = byId.get(it.objectB);
+    if (a && b && a !== b) createRope(a, b, it);
+  });
+}
+
+/* ---------- undo / redo (scene snapshots) ---------- */
+const MAX_HISTORY = 100;
+const undoStack = [], redoStack = [];
+let historyReady = false, historyBusy = false;
+
+function historySnapshot() {
+  return { scene: serialize(), selectedId: selected?.alive ? selected.id : null };
+}
+function historySignature(s) {
+  // timestamp や選択だけの変更では履歴を作らない
+  return JSON.stringify({ world: s.scene.world, objects: s.scene.objects, ropes: s.scene.ropes || [] });
+}
+function beginHistory() {
+  return historyReady && !historyBusy ? historySnapshot() : null;
+}
+function syncHistoryButtons() {
+  $('b-undo').disabled = undoStack.length === 0;
+  $('b-redo').disabled = redoStack.length === 0;
+}
+function commitHistory(before, label = '操作') {
+  if (!before || historyBusy) return;
+  const after = historySnapshot();
+  if (historySignature(before) === historySignature(after)) return;
+  undoStack.push({ before, after, label });
+  if (undoStack.length > MAX_HISTORY) undoStack.shift();
+  redoStack.length = 0;
+  syncHistoryButtons();
+}
+function restoreHistorySnapshot(snap) {
+  historyBusy = true;
+  try {
+    deserialize(snap.scene);
+    selectObject(objs.find(o => o.id === snap.selectedId) || null);
+  } finally {
+    historyBusy = false;
+    syncHistoryButtons();
+  }
+}
+function undo() {
+  const e = undoStack.pop();
+  if (!e) return;
+  redoStack.push(e);
+  restoreHistorySnapshot(e.before);
+  toast(`元に戻しました: ${e.label}`);
+}
+function redo() {
+  const e = redoStack.pop();
+  if (!e) return;
+  undoStack.push(e);
+  restoreHistorySnapshot(e.after);
+  toast(`やり直しました: ${e.label}`);
+}
+$('b-undo').onclick = undo;
+$('b-redo').onclick = redo;
+
+// スライダーはドラッグ／キー操作全体を1件の履歴にまとめる（UI生成後に init で呼ぶ）
+const sliderHistory = new WeakMap();
+const SLIDER_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'];
+function wireSliderHistory() {
+  document.querySelectorAll('input[type="range"]').forEach(el => {
+    const start = () => { if (!sliderHistory.has(el)) sliderHistory.set(el, beginHistory()); };
+    const finish = () => {
+      if (!sliderHistory.has(el)) return;
+      commitHistory(sliderHistory.get(el), '設定変更');
+      sliderHistory.delete(el);
+    };
+    el.addEventListener('pointerdown', start);
+    el.addEventListener('keydown', e => { if (SLIDER_KEYS.includes(e.key)) start(); });
+    ['pointerup', 'pointercancel', 'change', 'blur'].forEach(t => el.addEventListener(t, finish));
+  });
+}
+
+/* ---------- UI build ---------- */
+const sl = (id, label, min, max, step, val) => `<div class="sr"><div class="sh"><span>${label}</span><span id="v-${id}" class="sv"></span></div><input id="s-${id}" type="range" min="${min}" max="${max}" step="${step}" value="${val}"></div>`;
+const SL = [
+  ['mass', '重量 (Mass)', .2, 50, .2, v => v.toFixed(1) + ' kg'],
+  ['friction', '摩擦係数 (Friction)', 0, 1, .05, v => v.toFixed(2)],
+  ['restitution', '反発係数 (Restitution)', 0, 1, .05, v => v.toFixed(2)],
+  ['scale', 'サイズ倍率 (Scale)', .3, 3, .05, v => v.toFixed(2) + 'x']
+];
+$('left').innerHTML = `<div class="ph">🧪 ツール &amp; 生成パレット</div><div class="pb">
+<div><div class="st">ツール選択</div><div class="tg" id="tg">${TOOLS.map(t => `<button class="tb${t[0] === 'select' ? ' on' : ''}" data-tool="${t[0]}" title="${t[4]}"><span class="ic">${t[1]}</span><span>${t[2]}</span></button>`).join('')}</div></div>
+<div><div class="st"><span>オブジェクト一覧</span><span id="type-badge" style="color:var(--cy)">立方体</span></div><div class="og" id="pal"></div><button id="spawn" class="btn pri" style="width:100%;margin-top:8px;padding:8px">＋ 中央上空に生成</button></div>
+<div><div class="st">重力コントロール</div><div class="cg">${sl('gravity', '重力の強さ', 0, 30, .1, 9.82)}<div class="r4">${[['無重力', 0], ['月', 1.62], ['地球', 9.82], ['木星', 24.8]].map(([n, g]) => `<button class="btn gpre" data-g="${g}">${n}</button>`).join('')}</div><button id="inv" class="btn warn" style="width:100%">⇅ 重力反転 (<span id="gdir">↓ 下向き</span>)</button></div></div>
+<div><div class="st">風 / 爆発 / 投射設定</div><div class="cg"><div class="tr"><span>定常風 (ラボ全域)</span><div id="sw-wind" class="sw"></div></div>${sl('wp', '風速パワー', 2, 60, 1, 18)}${sl('wa', '風向 (方位角)', 0, 360, 5, 0)}${sl('ep', '爆発威力 / 半径', 10, 120, 2, 45)}${sl('ls', '投射初速', 8, 65, 1, 28)}</div></div>
+<div><div class="st">ロープ設定</div><div class="cg">${sl('ropeSlack', 'ロープ長さ / たるみ', 1.02, 2.2, .02, 1.18)}${sl('ropeTension', '拘束の最大張力', 10000, 500000, 5000, 200000)}<div class="cr"><label for="rope-color" style="font-size:11px">ロープ色</label><input id="rope-color" type="color" value="#cbd5e1"></div><div class="st" style="margin:2px 0 0"><span>ロープ一覧</span><span id="rope-count" style="color:var(--cy)">0</span></div><div id="rope-list" style="display:flex;flex-direction:column;gap:4px;max-height:130px;overflow-y:auto"></div><button id="rope-clear" class="btn dng" style="width:100%">ロープをすべて削除</button></div></div></div>`;
+
+const axes = ['x', 'y', 'z'];
+$('right').innerHTML = `<div class="ph"><span id="ititle">⚙ 新規スポーン設定</span><span id="ibadge" class="badge">新規設定</span></div><div class="pb">
+<div id="selbar" class="cg" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center"><strong id="sel-label" style="color:#fff">立方体 #1</strong><button id="desel" class="btn" style="padding:3px 7px;font-size:10px">選択解除</button></div><div id="sel-tele" style="font:10px monospace;color:var(--dim)"></div>
+<div class="r2"><button id="sel-pin" class="btn">📌 固定切替</button><button id="sel-dup" class="btn pri">🧬 複製</button></div><div class="r2"><button id="sel-shat" class="btn warn">💥 破壊テスト</button><button id="sel-del" class="btn dng">🗑 削除</button></div></div>
+<div id="ropebar" class="cg" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center"><strong id="rope-label" style="color:#fff">ロープ #1</strong><button id="rope-desel" class="btn" style="padding:3px 7px;font-size:10px">選択解除</button></div><div id="rope-tele" style="font:10px monospace;color:var(--dim)"></div><div class="r2"><button id="rope-sel-a" class="btn">⇤ 始点を選択</button><button id="rope-sel-b" class="btn">終点を選択 ⇥</button></div><button id="rope-sel-del" class="btn dng" style="width:100%">🗑 このロープを削除</button></div>
+<div class="cg"><div class="st" style="margin:0">物理パラメータ</div>${SL.map(([k, l, a, b, s]) => sl(k, l, a, b, s, 1)).join('')}<div class="tr"><span>衝撃で破壊可能</span><div id="sw-destr" class="sw on"></div></div></div>
+<div class="cg"><div class="st" style="margin:0">外観カラー</div><div class="cr"><input id="color" type="color" value="#38bdf8"><div class="swl">${['#38bdf8', '#f43f5e', '#10b981', '#f59e0b', '#a855f7', '#e2e8f0'].map(c => `<div class="dot" style="background:${c}" data-c="${c}"></div>`).join('')}</div></div></div>
+<div class="cg"><div class="st" style="margin:0">回転 (度)</div><div class="r3">${axes.map(a => `<div class="ni"><label>ROT ${a.toUpperCase()}</label><input id="rot-${a}" class="num" type="number" step="15" value="0"></div>`).join('')}</div><button id="ap-rot" class="btn" style="width:100%">↻ 回転を適用</button></div>
+<div class="cg"><div class="st" style="margin:0">初速度 / 速度ベクトル (m/s)</div><div class="r3">${axes.map(a => `<div class="ni"><label>VEL ${a.toUpperCase()}</label><input id="vel-${a}" class="num" type="number" step="1" value="0"></div>`).join('')}</div><button id="ap-vel" class="btn pri" style="width:100%">⚡ 速度を適用</button></div></div>`;
+
+function refreshInspector() {
+  const o = selected, t = o || spawnCfg;
+  $('selbar').style.display = o ? 'flex' : 'none';
+  $('ititle').textContent = o ? '⚙ オブジェクト編集' : '⚙ 新規スポーン設定';
+  const b = $('ibadge'); b.textContent = o ? (o.pinned ? '固定中' : '選択中') : '新規設定'; b.classList.toggle('static', !!(o && o.pinned));
+  if (o) $('sel-label').textContent = `${o.preset.name} #${o.id}`;
+  SL.forEach(([k, , , , , f]) => { $('s-' + k).value = t[k]; $('v-' + k).textContent = f(+t[k]); });
+  $('sw-destr').classList.toggle('on', !!t.destructible);
+  $('color').value = t.color;
+  axes.forEach(a => {
+    if (o) {
+      const e = new THREE.Euler().setFromQuaternion(o.mesh.quaternion);
+      $('rot-' + a).value = Math.round(deg(e[a])); $('vel-' + a).value = o.body.velocity[a].toFixed(1);
+    } else { $('rot-' + a).value = spawnCfg['rot' + a.toUpperCase()]; $('vel-' + a).value = spawnCfg['vel' + a.toUpperCase()]; }
+  });
+}
+
+/* palette */
+function addPaletteCard(p) {
+  const c = document.createElement('button'); c.className = 'oc' + (p.id === curType ? ' on' : ''); c.dataset.type = p.id;
+  c.innerHTML = `<div class="sw0" style="background:${p.color}33;border-color:${p.color}">${p.icon}</div><div class="om"><div class="on1">${p.name}</div><div class="on2">${p.tag}</div></div>`;
+  c.onclick = () => {
+    curType = p.id; document.querySelectorAll('.oc').forEach(e => e.classList.toggle('on', e.dataset.type === curType));
+    $('type-badge').textContent = p.name;
+    Object.assign(spawnCfg, { mass: p.mass, friction: p.friction, restitution: p.restitution, color: p.color, destructible: p.destructible });
+    if (!selected) refreshInspector();
+    rebuildPreview();
+    if (['select', 'delete', 'pin', 'duplicate'].includes(tool)) setTool('place');
+  };
+  $('pal').appendChild(c);
+  return c;
+}
+Object.values(PRESETS).forEach(addPaletteCard);
+
+/* inspector handlers */
+SL.forEach(([k, , , , , f]) => $('s-' + k).addEventListener('input', e => {
+  const v = parseFloat(e.target.value); $('v-' + k).textContent = f(v);
+  const o = selected;
+  if (!o) { spawnCfg[k] = v; if (k === 'scale') preview.scale.setScalar(v); return; }
+  o[k] = v;
+  if (k === 'mass') { if (!o.pinned) { o.body.mass = v; o.body.updateMassProperties(); } o.body.wakeUp(); }
+  else if (k === 'scale') setScale(o, v);
+  else { o.body.material = getPhysMat(o.friction, o.restitution); o.body.wakeUp(); }
+}));
+$('sw-destr').onclick = e => {
+  const v = !e.currentTarget.classList.contains('on'); e.currentTarget.classList.toggle('on', v);
+  (selected || spawnCfg).destructible = v;
+};
+function setColor(c) {
+  $('color').value = c;
+  if (selected) { selected.color = c; selected.mesh.material.color.set(c); } else { spawnCfg.color = c; preview.material.color.set(c); }
+}
+$('color').oninput = e => setColor(e.target.value);
+document.querySelectorAll('.dot').forEach(d => d.onclick = () => setColor(d.dataset.c));
+$('ap-rot').onclick = () => {
+  const [x, y, z] = axes.map(a => parseFloat($('rot-' + a).value) || 0);
+  if (selected) {
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(rad(x), rad(y), rad(z)));
+    selected.body.quaternion.set(q.x, q.y, q.z, q.w); selected.body.angularVelocity.setZero(); selected.body.wakeUp(); selected.mesh.quaternion.copy(q);
+  } else { spawnCfg.rotX = x; spawnCfg.rotY = y; spawnCfg.rotZ = z; }
+  toast('回転を適用しました');
+};
+$('ap-vel').onclick = () => {
+  const [x, y, z] = axes.map(a => parseFloat($('vel-' + a).value) || 0);
+  if (selected) { if (!selected.pinned) { selected.body.velocity.set(x, y, z); selected.body.wakeUp(); } } else { spawnCfg.velX = x; spawnCfg.velY = y; spawnCfg.velZ = z; }
+  toast('速度を適用しました');
+};
+$('desel').onclick = () => selectObject(null);
+$('sel-pin').onclick = () => togglePin(selected);
+$('sel-dup').onclick = () => duplicate(selected);
+$('sel-shat').onclick = () => {
+  if (!selected) return;
+  const before = beginHistory();
+  shatter(selected, 16);
+  commitHistory(before, '破壊');
+};
+$('sel-del').onclick = () => {
+  if (!selected) return;
+  const before = beginHistory();
+  const n = `${selected.preset.name} #${selected.id}`;
+  removeObject(selected);
+  commitHistory(before, '削除');
+  toast(`${n} を削除しました`);
+};
+
+/* world controls */
+function syncWorldUI() {
+  $('s-gravity').value = ws.gravityStrength; $('v-gravity').textContent = `${ws.gravityStrength.toFixed(2)} m/s²`;
+  $('sw-wind').classList.toggle('on', ws.globalWind);
+  $('s-wp').value = ws.windPower; $('v-wp').textContent = ws.windPower;
+  $('s-wa').value = ws.windAngleDeg; $('v-wa').textContent = ws.windAngleDeg + '°';
+  $('s-ep').value = ws.explodePower; $('v-ep').textContent = `${ws.explodePower} / ${ws.explodeRadius.toFixed(0)}m`;
+  $('s-ls').value = ws.launchSpeed; $('v-ls').textContent = ws.launchSpeed + ' m/s';
+  $('s-ropeSlack').value = ws.ropeSlack; $('v-ropeSlack').textContent = ws.ropeSlack.toFixed(2) + 'x';
+  $('s-ropeTension').value = ws.ropeTension; $('v-ropeTension').textContent = (ws.ropeTension / 1000).toFixed(0) + ' kN';
+  $('rope-color').value = ws.ropeColor;
+  $('gdir').textContent = ws.gravityDir < 0 ? '↓ 下向き' : '↑ 上向き(反転)';
+}
+function applyGravity() {
+  const gy = ws.gravityStrength * ws.gravityDir;
+  world.gravity.set(0, gy, 0); wakeAll(); $('h-g').textContent = gy.toFixed(1); syncWorldUI();
+}
+[['gravity', 'gravityStrength', applyGravity], ['wp', 'windPower'], ['wa', 'windAngleDeg'], ['ep', 'explodePower'], ['ls', 'launchSpeed']].forEach(([id, key, fn]) =>
+  $('s-' + id).addEventListener('input', e => {
+    ws[key] = parseFloat(e.target.value);
+    if (key === 'explodePower') ws.explodeRadius = 5 + ws.explodePower * .08;
+    fn ? fn() : syncWorldUI();
+  }));
+document.querySelectorAll('.gpre').forEach(b => b.onclick = () => {
+  const before = beginHistory();
+  ws.gravityStrength = parseFloat(b.dataset.g);
+  applyGravity();
+  commitHistory(before, '重力変更');
+  toast(`重力を ${ws.gravityStrength} m/s² に設定しました`);
+});
+$('inv').onclick = () => {
+  const before = beginHistory();
+  ws.gravityDir *= -1;
+  applyGravity();
+  commitHistory(before, '重力反転');
+  toast(ws.gravityDir > 0 ? '重力を反転しました (上向き)' : '重力を通常に戻しました');
+};
+$('sw-wind').onclick = () => {
+  const before = beginHistory();
+  ws.globalWind = !ws.globalWind;
+  syncWorldUI();
+  wakeAll();
+  commitHistory(before, '定常風変更');
+  toast(ws.globalWind ? '定常風 ON' : '定常風 OFF');
+};
+$('s-ropeSlack').value = ws.ropeSlack; $('v-ropeSlack').textContent = ws.ropeSlack.toFixed(2) + 'x';
+$('s-ropeTension').value = ws.ropeTension; $('v-ropeTension').textContent = (ws.ropeTension / 1000).toFixed(0) + ' kN';
+$('rope-color').value = ws.ropeColor;
+$('s-ropeSlack').addEventListener('input', e => { ws.ropeSlack = parseFloat(e.target.value); $('v-ropeSlack').textContent = ws.ropeSlack.toFixed(2) + 'x'; ropes.forEach(rope => setRopeSlack(rope, ws.ropeSlack)); });
+$('s-ropeTension').addEventListener('input', e => { ws.ropeTension = parseFloat(e.target.value); $('v-ropeTension').textContent = (ws.ropeTension / 1000).toFixed(0) + ' kN'; ropes.forEach(rope => setRopeTension(rope, ws.ropeTension)); });
+$('rope-color').addEventListener('input', e => { ws.ropeColor = e.target.value; });
+$('rope-desel').onclick = () => selectRope(null);
+$('rope-sel-del').onclick = () => deleteRope(selectedRope);
+$('rope-sel-a').onclick = () => { if (selectedRope) selectObject(selectedRope.objA); };
+$('rope-sel-b').onclick = () => { if (selectedRope) selectObject(selectedRope.objB); };
+$('rope-clear').onclick = () => { if (!ropes.length) return; const before = beginHistory(); while (ropes.length) removeRope(ropes[0]); ropeStartObject = null; commitHistory(before, 'ロープ全削除'); toast('ロープをすべて削除しました'); };
+
+/* top bar */
+function toast(msg) {
+  const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; $('toasts').appendChild(el); setTimeout(() => el.remove(), 2400);
+}
+function setPaused(p) {
+  paused = p; $('b-pause').classList.toggle('active', p); $('b-resume').classList.toggle('active', !p);
+  $('dot').classList.toggle('p', p); $('state').textContent = p ? 'PAUSE' : 'RUN';
+}
+$('b-pause').onclick = () => setPaused(true);
+$('b-resume').onclick = () => setPaused(false);
+$('b-reset').onclick = () => {
+  const before = beginHistory();
+  starterScene();
+  commitHistory(before, 'リセット');
+  toast('実験施設を初期状態にリセットしました');
+};
+$('b-clear').onclick = () => {
+  const before = beginHistory();
+  clearAll();
+  commitHistory(before, '全削除');
+  toast('全オブジェクトを削除しました');
+};
+$('b-sound').onclick = e => { sfx.on = !sfx.on; e.currentTarget.classList.toggle('active', sfx.on); e.currentTarget.textContent = sfx.on ? '🔊 音ON' : '🔇 音OFF'; };
+$('b-save').onclick = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(serialize())); toast(`シーンを保存しました (${objs.length}個)`); } catch (err) { toast('保存に失敗しました: ' + err.message); } };
+$('b-load').onclick = () => {
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (!raw) return toast('保存されたシーンが見つかりません'); const before = beginHistory(); deserialize(JSON.parse(raw)); commitHistory(before, 'シーン読込'); toast('保存シーンを読み込みました'); }
+  catch (err) { toast('読込エラー: ' + err.message); }
+};
+$('b-export').onclick = () => {
+  const url = URL.createObjectURL(new Blob([JSON.stringify(serialize(), null, 2)], { type: 'application/json' }));
+  const a = document.createElement('a'); a.href = url; a.download = `physics-lab-3d-${Date.now()}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast('JSONファイルをエクスポートしました');
+};
+$('b-import').onclick = () => $('file').click();
+$('file').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { try { const before = beginHistory(); deserialize(JSON.parse(r.result)); commitHistory(before, 'JSON読込'); toast(`JSONを読み込みました (${objs.length}個)`); } catch (err) { toast('JSONの解析に失敗しました: ' + err.message); } };
+  r.readAsText(f); e.target.value = '';
+};
+$('spawn').onclick = () => {
+  sfx.init();
+  const p = PRESETS[curType];
+  selectObject(spawnObject(curType, { position: { x: (Math.random() - .5) * 1.4, y: halfH(p, spawnCfg.scale) + 6, z: (Math.random() - .5) * 1.4 }, ...spawnCfg,
+    velocity: { x: spawnCfg.velX, y: spawnCfg.velY, z: spawnCfg.velZ } }));
+};
+/* ---------- GLB / glTF models (auto Box collider) ---------- */
+const MAX_MODEL_BYTES = 50 * 1024 * 1024, MAX_MODEL_TRIS = 1000000, MODEL_TARGET_SIZE = 1.6;
+const modelAssets = new Map(); // assetId -> { id, name, buffer, visual }
+const gltfLoader = new GLTFLoader();
+
+// The physics body is the normal Box object; the model is only its visual child (the Box mesh stays invisible for picking/selection).
+function attachModelVisual(mesh, p) {
+  const asset = modelAssets.get(p.model);
+  mesh.material.visible = false;
+  mesh.castShadow = mesh.receiveShadow = false;
+  if (asset) mesh.add(asset.visual.clone(true));
+}
+
+// GLB binaries live in IndexedDB; scenes only store the asset id (typeId 'model:<id>').
+const idbOpen = () => new Promise((res, rej) => {
+  const r = indexedDB.open('physics_lab_3d', 1);
+  r.onupgradeneeded = () => r.result.createObjectStore('models', { keyPath: 'id' });
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+});
+async function idbPutModel(rec) {
+  const db = await idbOpen();
+  await new Promise((res, rej) => { const tx = db.transaction('models', 'readwrite'); tx.objectStore('models').put(rec); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+  db.close();
+}
+async function idbAllModels() {
+  const db = await idbOpen();
+  const all = await new Promise((res, rej) => { const q = db.transaction('models').objectStore('models').getAll(); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+  db.close(); return all;
+}
+
+// Parses first; the scene and palette are only touched if parsing succeeds.
+async function registerModel(id, name, buffer) {
+  const gltf = await new Promise((res, rej) => gltfLoader.parse(buffer, '', res, rej));
+  const root = gltf.scene;
+  let tris = 0;
+  root.traverse(o => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; } });
+  if (tris > MAX_MODEL_TRIS) throw new Error(`ポリゴン数が多すぎます (${Math.round(tris / 1000)}k / 上限 ${MAX_MODEL_TRIS / 1000}k)`);
+  root.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+  const longest = Math.max(size.x, size.y, size.z);
+  if (!Number.isFinite(longest) || longest <= 0) throw new Error('モデルの大きさを取得できませんでした');
+  root.position.sub(center);
+  const k = MODEL_TARGET_SIZE / longest, dim = v => Math.max(.05, v * k);
+  const visual = new THREE.Group(); visual.add(root); visual.scale.setScalar(k);
+  const pid = 'model:' + id;
+  const p = PRESETS[pid] = { id: pid, name: name.replace(/\.[^.]+$/, '').slice(0, 12), tag: 'GLB・Box衝突', icon: '📦', shape: 'box',
+    dims: { w: dim(size.x), h: dim(size.y), d: dim(size.z) }, mass: 2, friction: .5, restitution: .2, color: '#cbd5e1', metalness: .1, roughness: .6,
+    destructible: false, breakThreshold: 999, model: id };
+  modelAssets.set(id, { id, name, buffer, visual });
+  return addPaletteCard(p);
+}
+async function importModelFile(file) {
+  if (!file) return;
+  if (!/\.(glb|gltf)$/i.test(file.name)) return toast('GLB / glTF ファイルを選んでください');
+  if (file.size > MAX_MODEL_BYTES) return toast(`ファイルが大きすぎます (上限 ${MAX_MODEL_BYTES / 1048576}MB)`);
+  toast(`モデルを読み込み中: ${file.name}`);
+  try {
+    const buffer = await file.arrayBuffer();
+    const id = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const card = await registerModel(id, file.name, buffer);
+    try { await idbPutModel({ id, name: file.name, buffer }); } catch { toast('保存領域を使えないため、モデルはこのセッションのみ保持されます'); }
+    const before = beginHistory();
+    card.click(); $('spawn').click();
+    commitHistory(before, 'モデル配置');
+    toast(`${file.name} を読み込みました`);
+  } catch (err) { toast('モデルの読込に失敗しました: ' + (err.message || err)); }
+}
+async function restoreModels() {
+  try { for (const r of await idbAllModels()) if (!modelAssets.has(r.id)) { try { await registerModel(r.id, r.name, r.buffer); } catch {} } } catch {}
+}
+$('b-model').onclick = () => $('model-file').click();
+$('model-file').onchange = e => { importModelFile(e.target.files[0]); e.target.value = ''; };
+let dragDepth = 0;
+const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
+addEventListener('dragenter', e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; $('drop').style.display = 'flex'; });
+addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+addEventListener('dragleave', e => { if (!hasFiles(e)) return; if (--dragDepth <= 0) { dragDepth = 0; $('drop').style.display = 'none'; } });
+addEventListener('drop', e => {
+  if (!hasFiles(e)) return;
+  e.preventDefault(); dragDepth = 0; $('drop').style.display = 'none';
+  const f = [...e.dataTransfer.files].find(f => /\.(glb|gltf)$/i.test(f.name));
+  if (f) importModelFile(f); else toast('GLB / glTF ファイルをドロップしてください');
+});
+
+$('tl').onclick = () => { const c = $('left').classList.toggle('collapsed'); $('tl').textContent = c ? '▶' : '◀'; };
+$('tr').onclick = () => { const c = $('right').classList.toggle('collapsed'); $('tr').textContent = c ? '◀' : '▶'; };
+
+function setTool(t) {
+  if (t !== 'rope') ropeStartObject = null;
+  tool = t; document.querySelectorAll('.tb').forEach(b => b.classList.toggle('on', b.dataset.tool === t));
+  const m = TOOLS.find(x => x[0] === t); $('pill').textContent = m[3]; $('desc').textContent = m[4];
+  updatePreview();
+  updateMoveGizmo();
+}
+$('tg').onclick = e => { const b = e.target.closest('.tb'); if (b) setTool(b.dataset.tool); };
+
+/* ---------- pointer input ---------- */
+const raycaster = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let downPos = { x: 0, y: 0 }, lastMouse = { x: 0, y: 0 }, overCanvas = false, holdingWind = false;
+function updateRay(cx, cy) {
+  const r = canvas.getBoundingClientRect();
+  ndc.set((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1); raycaster.setFromCamera(ndc, camera);
+}
+function rayHit() { const h = raycaster.intersectObjects([floorMesh, ...objs.map(o => o.mesh)], false); return h[0] || null; }
+function hitNormal(hit) { return hit.face ? hit.face.normal.clone().transformDirection(hit.object.matrixWorld) : new THREE.Vector3(0, 1, 0); }
+
+/* ---------- move gizmo (select tool) ---------- */
+const moveGizmo = new THREE.Group();
+moveGizmo.visible = false;
+scene.add(moveGizmo);
+
+const GIZMO_COLORS = { x: 0xef4444, y: 0x10b981, z: 0x38bdf8 };
+const GIZMO_DIRS = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) };
+
+function makeGizmoAxis(axis) {
+  const g = new THREE.Group();
+  g.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), GIZMO_DIRS[axis]);
+  const vis = new THREE.MeshBasicMaterial({ color: GIZMO_COLORS[axis], depthTest: false });
+  const pickMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, depthTest: false });
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .72, 10), vis);
+  shaft.position.y = .38; shaft.renderOrder = 20; g.add(shaft);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(.075, .2, 12), vis);
+  tip.position.y = .86; tip.renderOrder = 20; g.add(tip);
+  // 見た目より広めの当たり判定（タッチ操作用）
+  const picker = new THREE.Mesh(new THREE.CylinderGeometry(.13, .13, 1.05, 10), pickMat);
+  picker.position.y = .5; picker.userData.axis = axis; picker.renderOrder = 21; g.add(picker);
+  moveGizmo.add(g);
+}
+['x', 'y', 'z'].forEach(makeGizmoAxis);
+
+let gizmoDrag = null, placementDrag = false;
+
+function updateMoveGizmo() {
+  const visible = !!selected && selected.alive && tool === 'select';
+  moveGizmo.visible = visible;
+  if (!visible) return;
+  moveGizmo.position.copy(selected.mesh.position);
+  moveGizmo.scale.setScalar(THREE.MathUtils.clamp(camera.position.distanceTo(moveGizmo.position) * .075, .75, 4.5));
+}
+function setBodyPosition(body, p) {
+  body.position.copy(p); body.previousPosition.copy(p); body.interpolatedPosition.copy(p); body.initPosition.copy(p);
+  body.aabbNeedsUpdate = true; body.wakeUp();
+}
+function beginGizmoDrag(cx, cy) {
+  if (!selected || !selected.alive || tool !== 'select') return false;
+  updateRay(cx, cy);
+  const hit = raycaster.intersectObjects(moveGizmo.children, true).find(h => h.object.userData.axis);
+  if (!hit) return false;
+  const axis = hit.object.userData.axis, axisDir = GIZMO_DIRS[axis].clone(), origin = new THREE.Vector3().copy(selected.body.position);
+  const viewDir = camera.position.clone().sub(origin).normalize();
+  // 軸を含み、カメラから見やすいドラッグ平面
+  const normal = viewDir.clone().addScaledVector(axisDir, -viewDir.dot(axisDir));
+  if (normal.lengthSq() < 1e-6) normal.copy(camera.up).addScaledVector(axisDir, -camera.up.dot(axisDir));
+  normal.normalize();
+  const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, origin);
+  const start = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
+  if (!start) return false;
+  const body = selected.body;
+  gizmoDrag = { obj: selected, axis, axisDir, plane, startAxisPosition: start.dot(axisDir), startPosition: new THREE.Vector3().copy(body.position),
+    before: beginHistory(), originalType: body.type, originalMass: body.mass };
+  // ドラッグ中は重力や衝突で動かないよう一時的に運動学ボディにする
+  body.type = CANNON.Body.KINEMATIC; body.mass = 0;
+  body.velocity.setZero(); body.angularVelocity.setZero(); body.updateMassProperties(); body.wakeUp();
+  controls.enabled = false;
+  return true;
+}
+function moveGizmoDrag(cx, cy) {
+  if (!gizmoDrag) return;
+  if (!gizmoDrag.obj.alive) { gizmoDrag = null; controls.enabled = true; return; }
+  updateRay(cx, cy);
+  const pt = raycaster.ray.intersectPlane(gizmoDrag.plane, new THREE.Vector3());
+  if (!pt) return;
+  const delta = pt.dot(gizmoDrag.axisDir) - gizmoDrag.startAxisPosition;
+  const next = gizmoDrag.startPosition.clone().addScaledVector(gizmoDrag.axisDir, delta);
+  if (!Number.isFinite(next.x + next.y + next.z)) return;
+  setBodyPosition(gizmoDrag.obj.body, next);
+  gizmoDrag.obj.mesh.position.copy(next);
+  selHelper.setFromObject(gizmoDrag.obj.mesh);
+  updateMoveGizmo();
+}
+function endGizmoDrag() {
+  if (!gizmoDrag) return;
+  const drag = gizmoDrag;
+  gizmoDrag = null; controls.enabled = true;
+  if (!drag.obj.alive) return;
+  const body = drag.obj.body;
+  body.type = drag.originalType; body.mass = drag.originalMass; body.updateMassProperties();
+  // 移動後に飛び出さないよう速度をリセット
+  body.velocity.setZero(); body.angularVelocity.setZero(); body.wakeUp();
+  commitHistory(drag.before, 'ギズモ移動');
+  updateMoveGizmo();
+}
+function updatePreview() {
+  if (!overCanvas || !['place', 'explode', 'wind'].includes(tool)) { preview.visible = ring.visible = false; return; }
+  updateRay(lastMouse.x, lastMouse.y);
+  const hit = rayHit();
+  if (!hit) { preview.visible = ring.visible = false; return; }
+  if (tool === 'place') {
+    preview.position.copy(hit.point).addScaledVector(hitNormal(hit), halfH(PRESETS[curType], spawnCfg.scale) + .02);
+    preview.rotation.set(rad(spawnCfg.rotX), rad(spawnCfg.rotY), rad(spawnCfg.rotZ)); preview.visible = true;
+    ring.scale.setScalar(Math.max(.7, spawnCfg.scale)); ringMat.color.setHex(0x00e5ff);
+  } else {
+    preview.visible = false;
+    ring.scale.setScalar(tool === 'explode' ? ws.explodeRadius * .55 : 1.6); ringMat.color.setHex(tool === 'explode' ? 0xf97316 : 0x38bdf8);
+  }
+  ring.position.set(hit.point.x, hit.point.y + .04, hit.point.z); ring.visible = true;
+}
+function runTool(cx, cy) {
+  const historyBefore = beginHistory();
+  sfx.init(); updateRay(cx, cy);
+  const hit = rayHit(), ho = hit ? meshMap.get(hit.object) : null;
+  const common = () => ({ mass: spawnCfg.mass, friction: spawnCfg.friction, restitution: spawnCfg.restitution, scale: spawnCfg.scale, color: spawnCfg.color,
+    rotX: spawnCfg.rotX, rotY: spawnCfg.rotY, rotZ: spawnCfg.rotZ, destructible: spawnCfg.destructible });
+  switch (tool) {
+    case 'select': {
+      const rp = pickRope();
+      if (rp && (!hit || rp.along <= hit.distance + .05)) selectRope(rp.rope); else selectObject(ho);
+      break;
+    }
+    case 'place': {
+      if (!hit) return;
+      const pt = hit.point.clone().addScaledVector(hitNormal(hit), halfH(PRESETS[curType], spawnCfg.scale) + .02);
+      selectObject(spawnObject(curType, { ...common(), position: { x: pt.x, y: pt.y, z: pt.z }, velocity: { x: spawnCfg.velX, y: spawnCfg.velY, z: spawnCfg.velZ } }));
+      break;
+    }
+    case 'launch': {
+      const dir = raycaster.ray.direction.clone().normalize(), sp = camera.position.clone().addScaledVector(dir, 2.2), v = ws.launchSpeed, R = () => (Math.random() - .5) * 6;
+      const pr = spawnObject(curType, { ...common(), position: { x: sp.x, y: sp.y, z: sp.z }, velocity: { x: dir.x * v, y: dir.y * v + 1.5, z: dir.z * v }, angularVelocity: { x: R(), y: R(), z: R() } });
+      sfx.launch(); selectObject(pr); break;
+    }
+    case 'explode': explode(hit ? hit.point : raycaster.ray.origin.clone().addScaledVector(raycaster.ray.direction, 15)); break;
+    case 'wind': if (hit) windBlast(hit.point); break;
+    case 'pin': if (ho) togglePin(ho); break;
+    case 'duplicate': if (ho) duplicate(ho); break;
+    case 'delete': {
+      const rp = pickRope();
+      if (rp && (!hit || rp.along <= hit.distance + .05)) { const id = rp.rope.id; removeRope(rp.rope); toast(`ロープ #${id} を削除しました`); }
+      else if (ho) { const n = `${ho.preset.name} #${ho.id}`; removeObject(ho); toast(`${n} を削除しました`); }
+      break;
+    }
+    case 'rope': {
+      if (!ho) { ropeStartObject = null; toast('ロープ接続にはオブジェクトをクリックしてください'); break; }
+      if (!ropeStartObject || !ropeStartObject.alive) { ropeStartObject = ho; selectObject(ho); toast(`${ho.preset.name} #${ho.id} を始点にしました。次のオブジェクトをクリックしてください`); break; }
+      if (ropeStartObject === ho) { toast('別のオブジェクトを選択してください'); break; }
+      if (ropes.length >= MAX_ROPES) { ropeStartObject = null; toast(`ロープは最大 ${MAX_ROPES} 本までです`); break; }
+      const rope = createRope(ropeStartObject, ho);
+      ropeStartObject = null;
+      if (rope) { selectObject(ho); toast('たわむロープで接続しました'); } else toast('ロープを作成できませんでした');
+      break;
+    }
+  }
+  if (['place', 'launch', 'explode', 'wind', 'delete', 'rope'].includes(tool)) {
+    commitHistory(historyBefore, { place: '配置', launch: '投射', explode: '爆発', wind: '風', delete: '削除', rope: 'ロープ接続' }[tool]);
+  }
+}
+canvas.addEventListener('pointerenter', () => overCanvas = true);
+canvas.addEventListener('pointerleave', () => {
+  if (placementDrag || gizmoDrag) return;
+  overCanvas = holdingWind = false; preview.visible = ring.visible = false;
+});
+canvas.addEventListener('pointerdown', e => {
+  if (!e.isPrimary || e.button !== 0) return;
+  sfx.init(); downPos = { x: e.clientX, y: e.clientY }; lastMouse = { x: e.clientX, y: e.clientY }; overCanvas = true;
+  // ギズモを優先して判定
+  if (beginGizmoDrag(e.clientX, e.clientY)) { e.preventDefault(); return; }
+  if (tool === 'place') { placementDrag = true; controls.enabled = false; updatePreview(); e.preventDefault(); return; }
+  if (tool === 'wind') holdingWind = true;
+});
+canvas.addEventListener('pointermove', e => {
+  if (!e.isPrimary) return;
+  lastMouse = { x: e.clientX, y: e.clientY }; overCanvas = true;
+  if (gizmoDrag) { moveGizmoDrag(e.clientX, e.clientY); return; }
+  updatePreview();
+});
+canvas.addEventListener('pointerup', e => {
+  if (!e.isPrimary) return;
+  holdingWind = false;
+  if (gizmoDrag) { endGizmoDrag(); return; }
+  if (placementDrag) {
+    placementDrag = false; controls.enabled = true;
+    // クリック配置とドラッグ配置を同じ配置処理で行う
+    runTool(e.clientX, e.clientY); updatePreview();
+    return;
+  }
+  if (e.button === 0 && Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) < 6) runTool(e.clientX, e.clientY);
+});
+canvas.addEventListener('pointercancel', () => {
+  holdingWind = false;
+  if (gizmoDrag) endGizmoDrag();
+  if (placementDrag) { placementDrag = false; controls.enabled = true; }
+});
+
+/* ---------- keyboard ---------- */
+const keys = new Set();
+addEventListener('keydown', e => {
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+  const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
+  if (!mod) keys.add(k);
+  if (mod && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if (mod && k === 'y') { e.preventDefault(); redo(); return; }
+  if (e.code === 'Space') { e.preventDefault(); setPaused(!paused); }
+  else if ((e.key === 'Delete' || e.key === 'Backspace') && selected) {
+    e.preventDefault();
+    const before = beginHistory();
+    const n = `${selected.preset.name} #${selected.id}`;
+    removeObject(selected);
+    commitHistory(before, '削除');
+    toast(`${n} を削除しました`);
+  }
+  else if ((e.key === 'Delete' || e.key === 'Backspace') && selectedRope) { e.preventDefault(); deleteRope(selectedRope); }
+  else if (mod && k === 'd') { e.preventDefault(); if (selected) duplicate(selected); }
+  else if (!mod && k === 'r') {
+    e.preventDefault();
+    const before = beginHistory();
+    starterScene();
+    commitHistory(before, 'リセット');
+    toast('初期実験シーンにリセットしました');
+  }
+});
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+function camMove(dt) {
+  const f = (keys.has('w') || keys.has('arrowup') ? 1 : 0) - (keys.has('s') || keys.has('arrowdown') ? 1 : 0);
+  const r = (keys.has('d') || keys.has('arrowright') ? 1 : 0) - (keys.has('a') || keys.has('arrowleft') ? 1 : 0);
+  const u = (keys.has('e') ? 1 : 0) - (keys.has('q') ? 1 : 0);
+  if (!f && !r && !u) return;
+  const m = 16 * dt, fw = new THREE.Vector3(); camera.getWorldDirection(fw); fw.y = 0; fw.normalize();
+  const rt = new THREE.Vector3().crossVectors(fw, new THREE.Vector3(0, 1, 0)).normalize();
+  const d = fw.multiplyScalar(f * m).addScaledVector(rt, r * m); d.y = u * m;
+  camera.position.add(d); controls.target.add(d);
+}
+
+/* ---------- main loop ---------- */
+const clock = new THREE.Clock(); let fpsT = 0, fpsN = 0, windT = 0, holdT = 0, ropeWatchT = 0;
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = Math.min(clock.getDelta(), .05);
+  camMove(dt);
+  if (!paused) {
+    if (ws.globalWind) {
+      const a = rad(ws.windAngleDeg), fx = Math.cos(a) * ws.windPower, fz = Math.sin(a) * ws.windPower;
+      for (const o of objs) if (!o.pinned) { const k = Math.max(.5, Math.sqrt(o.mass)) * .35; o.body.wakeUp(); o.body.applyForce(new CANNON.Vec3(fx * k, 0, fz * k)); }
+    }
+    if (holdingWind) {
+      holdT += dt;
+      if (holdT > .25 && (windT += dt) > .1) { windT = 0; updateRay(lastMouse.x, lastMouse.y); const h = rayHit(); if (h) windBlast(h.point); }
+    } else holdT = 0;
+    world.step(1 / 60, dt, 3);
+    // Correct only tiny numerical penetrations; normal floor contacts remain handled by Cannon.
+    for (const rope of ropes) for (const node of rope.nodes) {
+      const minY = ROPE_FLOOR_TOP + ROPE_RADIUS - .002;
+      if (node.position.y < minY) { node.position.y = minY; if (node.velocity.y < 0) node.velocity.y = 0; node.wakeUp(); }
+    }
+    ropeWatchT += dt;
+    if (ropeWatchT > .5) { ropeWatchT = 0; checkRopes(); }
+    if (pending.length) {
+      const before = beginHistory();
+      while (pending.length) { const s = pending.shift(); if (s.obj.alive) shatter(s.obj, s.impact); }
+      commitHistory(before, '衝突による破壊');
+    }
+    for (const o of [...objs]) if (o.body.position.y < -40) removeObject(o);
+    updateEffects(dt);
+  }
+  for (const o of objs) {
+    const p = o.body.position, q = o.body.quaternion;
+    o.mesh.position.set(p.x, p.y, p.z); o.mesh.quaternion.set(q.x, q.y, q.z, q.w);
+  }
+  for (const rope of ropes) updateRopeMesh(rope);
+  updateMoveGizmo();
+  if (selected && selected.alive) {
+    selHelper.setFromObject(selected.mesh);
+    const p = selected.body.position;
+    $('sel-tele').textContent = `POS: ${p.x.toFixed(1)}, ${p.y.toFixed(1)}, ${p.z.toFixed(1)} | SPD: ${selected.body.velocity.length().toFixed(1)} m/s`;
+  }
+  if (selectedRope) {
+    const r = selectedRope, chord = anchorWorldPosition(r.objA, r.anchorA).distanceTo(anchorWorldPosition(r.objB, r.anchorB));
+    const asleep = r.nodes.filter(n => n.sleepState === CANNON.Body.SLEEPING).length;
+    $('rope-tele').textContent = `両端 ${chord.toFixed(2)}m | 全長 ${(r.segmentLength * (ROPE_NODE_COUNT + 1)).toFixed(2)}m | 眠り ${asleep}/${r.nodes.length}`;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  fpsT += dt; fpsN++;
+  if (fpsT >= .5) {
+    $('h-fps').textContent = Math.round(fpsN / fpsT); $('h-obj').textContent = objs.length; $('h-deb').textContent = debris.length;
+    fpsT = fpsN = 0;
+  }
+}
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight);
+});
+
+/* ---------- init ---------- */
+// The header wraps onto extra rows on narrower screens (the new model button made it wider), which used to cover the panel toggles.
+// Measure it and place the panels / toggles right below it.
+const topBar = $('top');
+const syncTopOffset = () => document.documentElement.style.setProperty('--top', (topBar.offsetHeight + 20) + 'px');
+new ResizeObserver(syncTopOffset).observe(topBar); syncTopOffset();
+rebuildPreview();
+setPaused(false);
+setTool('select');
+applyGravity();
+refreshInspector();
+starterScene();
+wireSliderHistory();
+historyReady = true;
+syncHistoryButtons();
+restoreModels();
+if (innerWidth < 820) { $('left').classList.add('collapsed'); $('right').classList.add('collapsed'); $('tl').textContent = '▶'; $('tr').textContent = '◀'; }
+loop();
+</script>
+</body>
+</html>
